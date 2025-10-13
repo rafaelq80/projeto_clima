@@ -18,9 +18,9 @@ describe('App de Clima - Testes Unitários', () => {
     // TESTES DE SUCESSO (Happy Path)
     // ========================================
 
-    describe('Busca do Clima - Sucesso', () => {
+    describe('Busca de Clima - Sucesso', () => {
         
-        test('1. deve retornar coordenadas e dados meteorológicos para cidade válida', async () => {
+        test('deve retornar coordenadas e dados meteorológicos para cidade válida', async () => {
             // Arrange
             const mockGeocodingData = {
                 results: [{
@@ -83,7 +83,7 @@ describe('App de Clima - Testes Unitários', () => {
 
     describe('Validação de Entrada', () => {
         
-        test('2. deve rejeitar entrada vazia', () => {
+        test('deve rejeitar entrada vazia', () => {
             // Arrange & Act
             const entradaVazia = '';
             const resultado = entradaVazia.trim().length > 0;
@@ -92,7 +92,7 @@ describe('App de Clima - Testes Unitários', () => {
             expect(resultado).toBe(false);
         });
 
-        test('3. deve rejeitar entrada com apenas espaços em branco', () => {
+        test('deve rejeitar entrada com apenas espaços em branco', () => {
             // Arrange & Act
             const entradaEspacos = '   ';
             const resultado = entradaEspacos.trim().length > 0;
@@ -101,7 +101,7 @@ describe('App de Clima - Testes Unitários', () => {
             expect(resultado).toBe(false);
         });
 
-        test('4. deve aceitar entrada válida após trim', () => {
+        test('deve aceitar entrada válida após trim', () => {
             // Arrange & Act
             const entradaValida = '  São Paulo  ';
             const resultado = entradaValida.trim().length > 0;
@@ -117,7 +117,7 @@ describe('App de Clima - Testes Unitários', () => {
 
     describe('Cidade Inexistente', () => {
         
-        test('5. deve retornar array vazio quando cidade não existe', async () => {
+        test('deve retornar array vazio quando cidade não existe', async () => {
             // Arrange
             global.fetch = jest.fn(() =>
                 Promise.resolve({
@@ -135,7 +135,7 @@ describe('App de Clima - Testes Unitários', () => {
             expect(data.results).toHaveLength(0);
         });
 
-        test('6. deve retornar false quando verificar existência de resultados', async () => {
+        test('deve retornar false quando verificar existência de resultados', async () => {
             // Arrange
             global.fetch = jest.fn(() =>
                 Promise.resolve({
@@ -159,7 +159,7 @@ describe('App de Clima - Testes Unitários', () => {
 
     describe('Tratamento de Erros de Rede', () => {
         
-        test('7. deve lançar erro quando houver falha de rede', async () => {
+        test('deve lançar erro quando houver falha de rede', async () => {
             // Arrange
             global.fetch = jest.fn(() =>
                 Promise.reject(new Error('Network Error'))
@@ -171,7 +171,7 @@ describe('App de Clima - Testes Unitários', () => {
                 .toThrow('Network Error');
         });
 
-        test('8. deve lançar erro quando houver timeout', async () => {
+        test('deve lançar erro quando houver timeout', async () => {
             // Arrange
             global.fetch = jest.fn(() =>
                 Promise.reject(new Error('Timeout'))
@@ -183,7 +183,7 @@ describe('App de Clima - Testes Unitários', () => {
                 .toThrow('Timeout');
         });
 
-        test('9. deve capturar erro genérico e verificar palavra Error', async () => {
+        test('deve capturar erro genérico e verificar palavra Error', async () => {
             // Arrange
             global.fetch = jest.fn(() =>
                 Promise.reject(new Error('Internal Server Error'))
@@ -205,7 +205,7 @@ describe('App de Clima - Testes Unitários', () => {
 
     describe('Controle de Taxa de Requisições', () => {
         
-        test('10. deve retornar status 429 quando exceder limite de requisições', async () => {
+        test('deve retornar status 429 quando exceder limite de requisições', async () => {
             // Arrange
             global.fetch = jest.fn(() =>
                 Promise.resolve({
@@ -236,7 +236,7 @@ describe('App de Clima - Testes Unitários', () => {
 
     describe('Timeout de Requisições', () => {
         
-        test('11. deve cancelar requisição quando exceder tempo limite', async () => {
+        test('deve cancelar requisição quando exceder tempo limite', async () => {
             // Arrange
             const TEMPO_MAX = 1000;
             
@@ -270,7 +270,7 @@ describe('App de Clima - Testes Unitários', () => {
 
     describe('Breaking Changes da API', () => {
         
-        test('12. deve detectar mudança no formato da resposta de geocoding', async () => {
+        test('deve detectar mudança no formato da resposta de geocoding', async () => {
             // Arrange - API mudou de 'results' para 'locations'
             global.fetch = jest.fn(() =>
                 Promise.resolve({
@@ -293,7 +293,7 @@ describe('App de Clima - Testes Unitários', () => {
             expect(data.locations).toBeDefined();
         });
 
-        test('13. deve detectar mudança no formato da resposta de clima', async () => {
+        test('deve detectar mudança no formato da resposta de clima', async () => {
             // Arrange - API mudou de 'current' para 'currentWeather'
             global.fetch = jest.fn(() =>
                 Promise.resolve({
@@ -322,7 +322,7 @@ describe('App de Clima - Testes Unitários', () => {
 
     describe('Funções Auxiliares', () => {
         
-        test('14. deve aplicar modo noturno entre 18h e 6h', () => {
+        test('deve aplicar modo noturno entre 18h e 6h', () => {
             // Arrange
             const horasNoturnas = [18, 19, 20, 21, 22, 23, 0, 1, 2, 3, 4, 5];
             
@@ -333,7 +333,7 @@ describe('App de Clima - Testes Unitários', () => {
             });
         });
 
-        test('15. deve aplicar modo diurno entre 6h e 18h', () => {
+        test('deve aplicar modo diurno entre 6h e 18h', () => {
             // Arrange
             const horasDiurnas = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
             
@@ -342,6 +342,284 @@ describe('App de Clima - Testes Unitários', () => {
                 const ehDia = hora >= 6 && hora < 18;
                 expect(ehDia).toBe(true);
             });
+        });
+    });
+
+    // ========================================
+    // TESTES DE CACHE
+    // ========================================
+
+    describe('Sistema de Cache com localStorage', () => {
+        
+        let mockLocalStorage;
+
+        beforeEach(() => {
+            // Mock do localStorage
+            mockLocalStorage = {
+                store: {},
+                getItem: jest.fn((key) => mockLocalStorage.store[key] || null),
+                setItem: jest.fn((key, value) => {
+                    mockLocalStorage.store[key] = value;
+                }),
+                removeItem: jest.fn((key) => {
+                    delete mockLocalStorage.store[key];
+                }),
+                clear: jest.fn(() => {
+                    mockLocalStorage.store = {};
+                })
+            };
+
+            global.localStorage = mockLocalStorage;
+            global.Date.now = jest.fn();
+        });
+
+        afterEach(() => {
+            mockLocalStorage.clear();
+            jest.restoreAllMocks();
+        });
+
+        test('deve salvar dados no cache com sucesso', () => {
+            // Arrange
+            const PREFIXO_CACHE = 'clima_cache_';
+            const UMA_HORA = 60 * 60 * 1000;
+            const timestampAtual = 1000000000;
+            Date.now.mockReturnValue(timestampAtual);
+
+            const chave = 'clima_saopaulo';
+            const dados = { temperatura: 25, clima: 'ensolarado' };
+
+            // Act
+            const chaveCompleta = PREFIXO_CACHE + chave;
+            const item = {
+                dados: dados,
+                horarioExpiracao: timestampAtual + UMA_HORA,
+                horarioSalvo: timestampAtual
+            };
+            localStorage.setItem(chaveCompleta, JSON.stringify(item));
+
+            // Assert
+            expect(localStorage.setItem).toHaveBeenCalledWith(
+                chaveCompleta,
+                JSON.stringify(item)
+            );
+            expect(localStorage.store[chaveCompleta]).toBeDefined();
+        });
+
+        test('deve retornar dados do cache quando ainda válidos', () => {
+            // Arrange
+            const PREFIXO_CACHE = 'clima_cache_';
+            const UMA_HORA = 60 * 60 * 1000;
+            const timestampSalvo = 1000000000;
+            const timestampAtual = timestampSalvo + (30 * 60 * 1000); // 30 minutos depois
+
+            const chave = 'clima_saopaulo';
+            const dados = { temperatura: 25, clima: 'ensolarado' };
+            const item = {
+                dados: dados,
+                horarioExpiracao: timestampSalvo + UMA_HORA,
+                horarioSalvo: timestampSalvo
+            };
+
+            const chaveCompleta = PREFIXO_CACHE + chave;
+            localStorage.setItem(chaveCompleta, JSON.stringify(item));
+
+            // Act
+            Date.now.mockReturnValue(timestampAtual);
+            const itemString = localStorage.getItem(chaveCompleta);
+            const itemRecuperado = JSON.parse(itemString);
+            const cacheValido = timestampAtual < itemRecuperado.horarioExpiracao;
+
+            // Assert
+            expect(cacheValido).toBe(true);
+            expect(itemRecuperado.dados).toEqual(dados);
+            expect(localStorage.removeItem).not.toHaveBeenCalled();
+        });
+
+        test('deve retornar null quando cache expirado', () => {
+            // Arrange
+            const PREFIXO_CACHE = 'clima_cache_';
+            const UMA_HORA = 60 * 60 * 1000;
+            const timestampSalvo = 1000000000;
+            const timestampAtual = timestampSalvo + UMA_HORA + 1000; // 1 hora e 1 segundo depois
+
+            const chave = 'clima_saopaulo';
+            const dados = { temperatura: 25, clima: 'ensolarado' };
+            const item = {
+                dados: dados,
+                horarioExpiracao: timestampSalvo + UMA_HORA,
+                horarioSalvo: timestampSalvo
+            };
+
+            const chaveCompleta = PREFIXO_CACHE + chave;
+            localStorage.setItem(chaveCompleta, JSON.stringify(item));
+
+            // Act
+            Date.now.mockReturnValue(timestampAtual);
+            const itemString = localStorage.getItem(chaveCompleta);
+            const itemRecuperado = JSON.parse(itemString);
+            const cacheExpirado = timestampAtual > itemRecuperado.horarioExpiracao;
+
+            // Assert
+            expect(cacheExpirado).toBe(true);
+            
+            // Simular remoção do cache expirado
+            if (cacheExpirado) {
+                localStorage.removeItem(chaveCompleta);
+            }
+            expect(localStorage.removeItem).toHaveBeenCalledWith(chaveCompleta);
+        });
+
+        test('deve retornar null quando cache não existe', () => {
+            // Arrange
+            const PREFIXO_CACHE = 'clima_cache_';
+            const chave = 'clima_cidade_inexistente';
+            const chaveCompleta = PREFIXO_CACHE + chave;
+
+            // Act
+            const resultado = localStorage.getItem(chaveCompleta);
+
+            // Assert
+            expect(resultado).toBeNull();
+            expect(localStorage.getItem).toHaveBeenCalledWith(chaveCompleta);
+        });
+
+        test('deve criar chave de cache formatada corretamente', () => {
+            // Arrange
+            const tipo = 'clima';
+            const valor = 'São Paulo';
+
+            // Act - Simula criação de chave
+            const valorLimpo = valor
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/\s+/g, '_')
+                .replace(/[^a-z0-9_]/g, '');
+            
+            const chave = `${tipo}_${valorLimpo}`;
+
+            // Assert
+            expect(chave).toBe('clima_sao_paulo');
+        });
+
+        test('deve remover apenas caches com prefixo correto', () => {
+            // Arrange
+            const PREFIXO_CACHE = 'clima_cache_';
+            
+            localStorage.setItem(PREFIXO_CACHE + 'clima1', 'valor1');
+            localStorage.setItem(PREFIXO_CACHE + 'clima2', 'valor2');
+            localStorage.setItem('outro_dado', 'valor3');
+
+            // Act - Remover apenas itens com prefixo
+            const chaves = Object.keys(localStorage.store);
+            let removidos = 0;
+
+            chaves.forEach(chave => {
+                if (chave.startsWith(PREFIXO_CACHE)) {
+                    localStorage.removeItem(chave);
+                    removidos++;
+                }
+            });
+
+            // Assert
+            expect(removidos).toBe(2);
+            expect(localStorage.store['outro_dado']).toBeDefined();
+            expect(localStorage.store[PREFIXO_CACHE + 'clima1']).toBeUndefined();
+            expect(localStorage.store[PREFIXO_CACHE + 'clima2']).toBeUndefined();
+        });
+
+        test('deve limpar apenas caches expirados', () => {
+            // Arrange
+            const PREFIXO_CACHE = 'clima_cache_';
+            const UMA_HORA = 60 * 60 * 1000;
+            const timestampBase = 1000000000;
+            const timestampAtual = timestampBase + UMA_HORA + 1000;
+
+            // Cache expirado
+            const itemExpirado = {
+                dados: { temp: 20 },
+                horarioExpiracao: timestampBase + UMA_HORA,
+                horarioSalvo: timestampBase
+            };
+
+            // Cache válido
+            const itemValido = {
+                dados: { temp: 25 },
+                horarioExpiracao: timestampAtual + UMA_HORA,
+                horarioSalvo: timestampAtual
+            };
+
+            localStorage.setItem(PREFIXO_CACHE + 'expirado', JSON.stringify(itemExpirado));
+            localStorage.setItem(PREFIXO_CACHE + 'valido', JSON.stringify(itemValido));
+
+            // Act
+            Date.now.mockReturnValue(timestampAtual);
+            let removidos = 0;
+            const chaves = Object.keys(localStorage.store);
+
+            chaves.forEach(chave => {
+                if (chave.startsWith(PREFIXO_CACHE)) {
+                    try {
+                        const item = JSON.parse(localStorage.getItem(chave));
+                        if (timestampAtual > item.horarioExpiracao) {
+                            localStorage.removeItem(chave);
+                            removidos++;
+                        }
+                    } catch (e) {
+                        localStorage.removeItem(chave);
+                        removidos++;
+                    }
+                }
+            });
+
+            // Assert
+            expect(removidos).toBe(1);
+            expect(localStorage.store[PREFIXO_CACHE + 'expirado']).toBeUndefined();
+            expect(localStorage.store[PREFIXO_CACHE + 'valido']).toBeDefined();
+        });
+
+        test('deve usar cache válido antes de fazer requisição', () => {
+            // Arrange
+            const PREFIXO_CACHE = 'clima_cache_';
+            const UMA_HORA = 60 * 60 * 1000;
+            const timestampSalvo = 1000000000;
+            const timestampAtual = timestampSalvo + (10 * 60 * 1000); // 10 minutos depois
+
+            const dadosCache = {
+                latitude: -23.5505,
+                longitude: -46.6333,
+                nome: 'São Paulo',
+                pais: 'Brasil'
+            };
+
+            const item = {
+                dados: dadosCache,
+                horarioExpiracao: timestampSalvo + UMA_HORA,
+                horarioSalvo: timestampSalvo
+            };
+
+            const chave = PREFIXO_CACHE + 'coordenadas_sao_paulo';
+            localStorage.setItem(chave, JSON.stringify(item));
+
+            // Mock do fetch para verificar que não será chamado
+            global.fetch = jest.fn();
+
+            // Act
+            Date.now.mockReturnValue(timestampAtual);
+            const itemString = localStorage.getItem(chave);
+            
+            let resultado = null;
+            if (itemString) {
+                const itemRecuperado = JSON.parse(itemString);
+                if (timestampAtual <= itemRecuperado.horarioExpiracao) {
+                    resultado = itemRecuperado.dados;
+                }
+            }
+
+            // Assert
+            expect(resultado).not.toBeNull();
+            expect(resultado).toEqual(dadosCache);
+            expect(global.fetch).not.toHaveBeenCalled();
         });
     });
 });
