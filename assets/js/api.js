@@ -5,7 +5,7 @@
  * de cidades ao redor do mundo.
  * 
  * @author Rafael Queiróz
- * @version 1.0.0
+ * @version 2.0.0
  * @license MIT
  */
 
@@ -26,6 +26,7 @@ const cityName = document.getElementById('cityName');
 const currentDate = document.getElementById('currentDate');
 const description = document.getElementById('description');
 const backBtn = document.getElementById('backBtn');
+const forecastGrid = document.getElementById('forecastGrid');
 
 // ===== CONSTANTES =====
 /**
@@ -74,6 +75,33 @@ function obterDataAtual() {
         day: 'numeric' 
     };
     return hoje.toLocaleDateString('pt-BR', opcoes);
+}
+
+/**
+ * Formata uma data string para exibição do dia da semana
+ * 
+ * @param {string} dataString - Data no formato ISO (YYYY-MM-DD)
+ * @returns {Object} Objeto com dia da semana e data formatada
+ * @returns {string} returns.diaSemana - Dia da semana (ex: "Terça-feira")
+ * @returns {string} returns.diaEMes - Dia e mês (ex: "14 de outubro")
+ * 
+ * @example
+ * formatarDiaSemana('2025-10-14');
+ * // { diaSemana: "Terça-feira", diaEMes: "14 de outubro" }
+ */
+function formatarDiaSemana(dataString) {
+    const data = new Date(dataString + 'T12:00:00');
+    
+    const opcoesDiaSemana = { weekday: 'long' };
+    const diaSemana = data.toLocaleDateString('pt-BR', opcoesDiaSemana);
+    
+    const opcoesDiaEMes = { day: 'numeric', month: 'long' };
+    const diaEMes = data.toLocaleDateString('pt-BR', opcoesDiaEMes);
+    
+    return {
+        diaSemana: diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1),
+        diaEMes: diaEMes.charAt(0).toUpperCase() + diaEMes.slice(1)
+    };
 }
 
 /**
@@ -169,17 +197,23 @@ async function buscarCoordenadas(cidade) {
 }
 
 /**
- * Busca dados meteorológicos atuais usando coordenadas geográficas
+ * Busca dados meteorológicos atuais e previsão de 5 dias usando coordenadas geográficas
  * 
  * @async
  * @param {Object} coordenadas - Objeto contendo latitude e longitude
  * @param {number} coordenadas.latitude - Latitude da localização
  * @param {number} coordenadas.longitude - Longitude da localização
- * @returns {Promise<Object>} Dados climáticos atuais
- * @returns {number} returns.temperature_2m - Temperatura em graus Celsius
- * @returns {number} returns.relative_humidity_2m - Umidade relativa em %
- * @returns {number} returns.wind_speed_10m - Velocidade do vento em km/h
- * @returns {number} returns.weather_code - Código do clima (0-99)
+ * @returns {Promise<Object>} Dados climáticos atuais e previsão diária
+ * @returns {Object} returns.current - Dados do clima atual
+ * @returns {number} returns.current.temperature_2m - Temperatura em graus Celsius
+ * @returns {number} returns.current.relative_humidity_2m - Umidade relativa em %
+ * @returns {number} returns.current.wind_speed_10m - Velocidade do vento em km/h
+ * @returns {number} returns.current.weather_code - Código do clima (0-99)
+ * @returns {Object} returns.daily - Dados de previsão diária para 5 dias
+ * @returns {Array<string>} returns.daily.time - Array com datas (YYYY-MM-DD)
+ * @returns {Array<number>} returns.daily.temperature_2m_max - Temperaturas máximas
+ * @returns {Array<number>} returns.daily.temperature_2m_min - Temperaturas mínimas
+ * @returns {Array<number>} returns.daily.weather_code - Códigos do clima diários
  * @throws {Error} Lança erro se falhar na requisição HTTP
  * @throws {Error} Lança erro 'TIMEOUT' se exceder tempo limite
  * 
@@ -187,17 +221,23 @@ async function buscarCoordenadas(cidade) {
  * const coords = { latitude: -23.5505, longitude: -46.6333 };
  * const clima = await buscarDadosClima(coords);
  * // { 
- * //   temperature_2m: 25.5,
- * //   relative_humidity_2m: 65,
- * //   wind_speed_10m: 10.5,
- * //   weather_code: 0
+ * //   current: { temperature_2m: 25.5, weather_code: 0, ... },
+ * //   daily: { 
+ * //     time: ['2025-10-13', '2025-10-14', ...],
+ * //     temperature_2m_max: [28, 29, ...],
+ * //     temperature_2m_min: [18, 19, ...],
+ * //     weather_code: [0, 2, ...]
+ * //   }
  * // }
  */
 async function buscarDadosClima(coordenadas) {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${coordenadas.latitude}&longitude=${coordenadas.longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&timezone=auto`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${coordenadas.latitude}&longitude=${coordenadas.longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=5`;
     const resposta = await fetchComTimeout(url);
     const dados = await resposta.json();
-    return dados.current;
+    return {
+        current: dados.current,
+        daily: dados.daily
+    };
 }
 
 // ===== FUNÇÃO PRINCIPAL =====
@@ -288,28 +328,102 @@ function tratarErro(erro) {
  * @param {string} nome - Nome da cidade
  * @param {string} pais - Nome do país
  * @param {Object} dados - Dados climáticos da API
- * @param {number} dados.temperature_2m - Temperatura em Celsius
- * @param {number} dados.weather_code - Código do clima
+ * @param {Object} dados.current - Dados do clima atual
+ * @param {number} dados.current.temperature_2m - Temperatura em Celsius
+ * @param {number} dados.current.weather_code - Código do clima
+ * @param {Object} dados.daily - Dados de previsão diária
  * @returns {void}
  * 
  * @example
- * const dados = { temperature_2m: 25.5, weather_code: 0 };
+ * const dados = { 
+ *   current: { temperature_2m: 25.5, weather_code: 0 },
+ *   daily: { time: [...], temperature_2m_max: [...], temperature_2m_min: [...], weather_code: [...] }
+ * };
  * exibirClima('São Paulo', 'Brasil', dados);
- * // Atualiza tela com: "São Paulo, Brasil", "26°", ícone de sol
+ * // Atualiza tela com clima atual e previsão de 5 dias
  */
 function exibirClima(nome, pais, dados) {
     esconderMensagens();
     
     cityName.textContent = `${nome}, ${pais}`;
-    temperature.textContent = `${Math.round(dados.temperature_2m)}°`;
+    
+    // Exibir temperatura atual (máxima) e mínima do dia
+    const tempAtual = Math.round(dados.current.temperature_2m);
+    const tempMinHoje = Math.round(dados.daily.temperature_2m_min[0]);
+    temperature.innerHTML = `${tempAtual}° <span class="temp-min-current">/ ${tempMinHoje}°</span>`;
+    
     currentDate.textContent = obterDataAtual();
 
-    const clima = obterDescricaoClima(dados.weather_code);
+    const clima = obterDescricaoClima(dados.current.weather_code);
     weatherIcon.className = `weather-icon wi ${clima.icone}`;
     description.textContent = clima.descricao;
 
+    // Exibir previsão dos próximos 4 dias
+    exibirPrevisao5Dias(dados.daily);
+
     searchScreen.style.display = 'none';
     resultScreen.style.display = 'flex';
+}
+
+/**
+ * Exibe a previsão dos próximos 4 dias na interface
+ * Cria cards com informações diárias de clima
+ * 
+ * @param {Object} dadosDiarios - Dados de previsão diária da API
+ * @param {Array<string>} dadosDiarios.time - Array com datas
+ * @param {Array<number>} dadosDiarios.temperature_2m_max - Temperaturas máximas
+ * @param {Array<number>} dadosDiarios.temperature_2m_min - Temperaturas mínimas
+ * @param {Array<number>} dadosDiarios.weather_code - Códigos do clima
+ * @returns {void}
+ * 
+ * @example
+ * const daily = {
+ *   time: ['2025-10-13', '2025-10-14', '2025-10-15', '2025-10-16', '2025-10-17'],
+ *   temperature_2m_max: [28, 29, 27, 26, 28],
+ *   temperature_2m_min: [18, 19, 17, 16, 18],
+ *   weather_code: [0, 2, 3, 61, 0]
+ * };
+ * exibirPrevisao5Dias(daily);
+ * // Cria 4 cards com previsão (ignora índice 0 que é hoje)
+ */
+function exibirPrevisao5Dias(dadosDiarios) {
+    forecastGrid.innerHTML = '';
+
+    // Criar cards para os próximos 4 dias (índices 1 a 4, pois 0 é hoje)
+    for (let i = 1; i < 5; i++) {
+        const dia = dadosDiarios.time[i];
+        const tempMax = Math.round(dadosDiarios.temperature_2m_max[i]);
+        const tempMin = Math.round(dadosDiarios.temperature_2m_min[i]);
+        const codigoClima = dadosDiarios.weather_code[i];
+        
+        const clima = obterDescricaoClima(codigoClima);
+        const dataFormatada = formatarDiaSemana(dia);
+
+        const card = document.createElement('div');
+        card.className = 'forecast-card';
+        card.innerHTML = `
+            <div class="forecast-date">
+                <div class="date-weekday">${dataFormatada.diaSemana}</div>
+                <div class="date-day">${dataFormatada.diaEMes}</div>
+            </div>
+            <div class="forecast-weather">
+                <i class="wi ${clima.icone} forecast-icon"></i>
+                <div class="forecast-description">${clima.descricao}</div>
+            </div>
+            <div class="forecast-temps">
+                <div class="temp-item">
+                    <span class="temp-arrow temp-arrow-up">▲</span>
+                    <span class="temp-max">${tempMax}°</span>
+                </div>
+                <div class="temp-item">
+                    <span class="temp-arrow temp-arrow-down">▼</span>
+                    <span class="temp-min">${tempMin}°</span>
+                </div>
+            </div>
+        `;
+
+        forecastGrid.appendChild(card);
+    }
 }
 
 /**
