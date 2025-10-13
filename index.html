@@ -1,21 +1,33 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Projeto Previsão do Tempo.">
-    <meta name="author" content="Rafael Queiróz">
-    <meta name="keywords" content="clima, previsão do tempo, Open Meteo, desenvolvimento web, fullstack, HTML, CSS, JavaScript">
-    <title>Previsão do Tempo</title>
 
-    <link rel="icon" href="./assets/images/favicon.svg">
+<head>
+    <!-- Servidores de Fontes do Google -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Fonte do Google - Poppins -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+
+    <!-- Weather Icons CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.12/css/weather-icons.min.css">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Projeto Previsao do Tempo.">
+    <meta name="author" content="Rafael Queiróz">
+    <meta name="keywords" content="clima, previsão do tempo, Open Meteo, desenvolvimento web, fullstack, HTML, CSS, JavaScript">
+
+    <link rel="icon" type="image/svg+xml" href="./assets/images/favicon.svg" />
+
+    <title>Previsão do Tempo</title>
+
+    <!-- Link para o arquivo CSS -->
     <link rel="stylesheet" href="./assets/css/styles.css">
 </head>
 
 <body>
+
     <div class="container">
         <!-- Tela de Busca -->
         <div id="searchScreen">
@@ -27,24 +39,32 @@
             </div>
 
             <div id="loading">Carregando...</div>
+            <div id="error"></div>
         </div>
 
         <!-- Tela de Resultado -->
         <div id="resultScreen">
+            <!-- Ícone e Temperatura lado a lado -->
             <div class="weather-header">
+                <i class="weather-icon" id="weatherIcon"></i>
                 <p id="temperature"></p>
             </div>
 
+            <!-- Cidade e Data embaixo -->
             <div class="weather-info">
                 <h2 id="cityName"></h2>
+                <p id="description"></p>
+                <p id="currentDate"></p>
             </div>
 
+            <!-- Botão para voltar -->
             <button id="backBtn" title="Voltar ao início">
-                <img src="./assets/images/home.svg" alt="Voltar">
+                <img src="./assets/images/home.svg" alt="Ícone de voltar">
             </button>
         </div>
     </div>
 
     <script src="./assets/js/api.js"></script>
 </body>
+
 </html>

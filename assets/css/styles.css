@@ -1,27 +1,43 @@
 /* Paleta de cores */
 :root {
+    /* Azuis do céu */
     --sky-light: #E0F6FF;
     --sky-medium: #87CEEB;
     --sky-dark: #4A90E2;
     --sky-darker: #2E5C8A;
+
+    /* Cores de noite */
+    --night-dark: #1a1a2e;
+    --night-medium: #16213e;
+    --night-light: #0f3460;
+
+    /* Cores de apoio */
     --cloud-white: #FFFFFF;
     --cloud-gray: #F5F5F5;
     --text-dark: #2C3E50;
     --text-light: #5A6C7D;
+
+    /* Cores de status */
+    --error-bg: #FFE6E6;
+    --error-text: #C41E3A;
+
+    /* Sombras */
     --shadow-light: rgba(0, 0, 0, 0.08);
     --shadow-medium: rgba(0, 0, 0, 0.12);
+
+    /* Weather header */
     --weather-bg-start: #B8D8E8;
     --weather-bg-end: #D6E4EC;
 }
 
-/* Reset */
+/* Reset básico */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-/* Corpo */
+/* Estilo do corpo da página */
 body {
     font-family: 'Poppins', Arial, sans-serif;
     min-height: 100vh;
@@ -30,9 +46,15 @@ body {
     align-items: center;
     padding: 1.25rem;
     background: linear-gradient(to bottom, var(--sky-medium), var(--sky-light));
+    transition: background 0.5s ease;
 }
 
-/* Container */
+/* Background noturno */
+body.night-mode {
+    background: linear-gradient(to bottom, var(--night-dark), var(--night-medium));
+}
+
+/* Container principal */
 .container {
     display: flex;
     flex-direction: column;
@@ -46,15 +68,16 @@ body {
     box-shadow: 0 0.625rem 2.5rem var(--shadow-medium);
 }
 
-/* Título */
+/* Título principal */
 h1 {
     text-align: center;
     color: var(--sky-darker);
     font-size: 2rem;
     font-weight: 600;
+    margin-bottom: 0.5rem;
 }
 
-/* Tela de busca */
+/* ===== TELA DE BUSCA ===== */
 #searchScreen {
     display: flex;
     flex-direction: column;
@@ -77,6 +100,7 @@ input {
     border: 0.125rem solid transparent;
     border-radius: 0.625rem;
     font-size: 0.9375rem;
+    font-family: 'Poppins', Arial, sans-serif;
     background-color: var(--cloud-gray);
     color: var(--text-dark);
     transition: all 0.3s ease;
@@ -86,6 +110,11 @@ input:focus {
     outline: none;
     border-color: var(--sky-dark);
     background-color: var(--cloud-white);
+    box-shadow: 0 0 0 0.1875rem rgba(74, 144, 226, 0.1);
+}
+
+input::placeholder {
+    color: var(--text-light);
 }
 
 /* Botões */
@@ -97,14 +126,23 @@ button {
     border-radius: 0.625rem;
     cursor: pointer;
     font-size: 0.9375rem;
+    font-weight: 500;
+    font-family: 'Poppins', Arial, sans-serif;
     transition: all 0.3s ease;
+    box-shadow: 0 0.25rem 0.75rem rgba(74, 144, 226, 0.3);
 }
 
 button:hover {
     background-color: var(--sky-darker);
+    transform: translateY(-0.125rem);
+    box-shadow: 0 0.375rem 1rem rgba(74, 144, 226, 0.4);
 }
 
-/* Loading */
+button:active {
+    transform: translateY(0);
+}
+
+/* Mensagem de carregamento */
 #loading {
     display: none;
     color: var(--sky-dark);
@@ -113,7 +151,20 @@ button:hover {
     padding: 0.75rem;
 }
 
-/* Tela de resultado */
+/* Mensagem de erro */
+#error {
+    display: none;
+    color: var(--error-text);
+    background-color: var(--error-bg);
+    padding: 0.875rem 1.25rem;
+    border-radius: 0.625rem;
+    width: 100%;
+    text-align: center;
+    font-size: 0.875rem;
+    border-left: 0.25rem solid var(--error-text);
+}
+
+/* ===== TELA DE RESULTADO ===== */
 #resultScreen {
     display: none;
     flex-direction: column;
@@ -122,16 +173,38 @@ button:hover {
     gap: 1.5rem;
 }
 
-/* Cabeçalho do clima */
+/* Área superior: Ícone e Temperatura lado a lado */
 .weather-header {
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 1.25rem;
     padding: 1.875rem 1.25rem;
     width: 100%;
-    background: linear-gradient(135deg, var(--weather-bg-start), var(--weather-bg-end));
+    background: linear-gradient(135deg, var(--weather-bg-start) 0%, var(--weather-bg-end) 100%);
     border-radius: 1rem;
     box-shadow: 0 0.25rem 1rem var(--shadow-light);
+}
+
+/* Ícone do clima */
+.weather-icon {
+    font-size: 5rem;
+    line-height: 1;
+    color: var(--sky-dark);
+    animation: float 3s ease-in-out infinite;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Animação de zoom para o ícone */
+@keyframes float {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
 }
 
 /* Temperatura */
@@ -140,15 +213,19 @@ button:hover {
     font-size: 4.5rem;
     font-weight: 700;
     line-height: 1;
+    text-shadow: 0 0.125rem 0.25rem var(--shadow-light);
 }
 
-/* Informações da cidade */
+/* Área inferior: Cidade e Data */
 .weather-info {
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 0.5rem;
+    width: 100%;
 }
 
+/* Nome da cidade */
 #cityName {
     color: var(--sky-darker);
     font-size: 1.75rem;
@@ -156,7 +233,22 @@ button:hover {
     text-align: center;
 }
 
-/* Botão voltar */
+/* Data atual */
+#currentDate {
+    color: var(--text-light);
+    font-size: 1rem;
+    font-weight: 400;
+}
+
+/* Descrição do clima */
+#description {
+    color: var(--text-dark);
+    font-size: 1.125rem;
+    margin-top: 0.25rem;
+    font-weight: 500;
+}
+
+/* Botão de voltar */
 #backBtn {
     margin-top: 0.5rem;
     background-color: var(--sky-dark);
@@ -168,14 +260,26 @@ button:hover {
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0.25rem 0.75rem var(--shadow-medium);
 }
 
 #backBtn img {
     width: 1.375rem;
     height: 1.375rem;
+    transition: transform 0.2s ease;
 }
 
-/* Responsividade */
+#backBtn:hover {
+    background-color: var(--sky-darker);
+    transform: scale(1.05);
+}
+
+#backBtn:hover img {
+    transform: scale(1.1);
+}
+
+/* ===== RESPONSIVIDADE ===== */
 @media (max-width: 30rem) {
     .container {
         padding: 1.875rem 1.25rem;
@@ -193,11 +297,34 @@ button:hover {
         width: 100%;
     }
 
+    .weather-header {
+        gap: 0.9375rem;
+    }
+
+    .weather-icon {
+        font-size: 4rem;
+    }
+
     #temperature {
         font-size: 3.5rem;
     }
 
     #cityName {
         font-size: 1.5rem;
+    }
+
+    #currentDate {
+        font-size: 0.9rem;
+    }
+
+    #backBtn {
+        width: 2.625rem;
+        height: 2.625rem;
+        border-radius: 0.5rem;
+    }
+
+    #backBtn img {
+        width: 1.125rem;
+        height: 1.125rem;
     }
 }
