@@ -1,0 +1,23 @@
+{
+  "name": "projeto_clima_",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rafaelq80/projeto_clima.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rafaelq80/projeto_clima/issues"
+  },
+  "homepage": "https://github.com/rafaelq80/projeto_clima#readme",
+  "devDependencies": {
+    "jest": "^30.2.0"
+  }
+}
