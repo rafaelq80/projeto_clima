@@ -16,7 +16,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Projeto Previsao do Tempo.">
     <meta name="author" content="Rafael Queiróz">
-    <meta name="keywords" content="clima, previsão do tempo, Open Meteo, desenvolvimento web, fullstack, HTML, CSS, JavaScript">
+    <meta name="keywords"
+        content="clima, previsão do tempo, Open Meteo, desenvolvimento web, fullstack, HTML, CSS, JavaScript">
 
     <link rel="icon" type="image/svg+xml" href="./assets/images/favicon.svg" />
 
@@ -27,40 +28,57 @@
 </head>
 
 <body>
-
     <div class="container">
         <!-- Tela de Busca -->
         <div id="searchScreen">
             <h1>Previsão do Tempo</h1>
+            <h2>Compare até 5 Cidades</h2>
 
             <div class="search-area">
                 <input type="text" id="cityInput" placeholder="Digite o nome da cidade">
-                <button id="searchBtn">Buscar</button>
+                <button id="addBtn">Adicionar</button>
             </div>
 
-            <div id="loading">Carregando...</div>
-            <div id="error"></div>
+            <div class="messages-area">
+                <div id="loading">Carregando...</div>
+                <div id="error"></div>
+                <div id="success"></div>
+            </div>
+
+            <div class="cities-list" id="citiesList"></div>
+
+            <div class="actions" id="actions" style="display: none;">
+                <button class="compare-btn" id="compareBtn">Comparar Climas</button>
+                <button class="clear-btn" id="clearBtn">Limpar Tudo</button>
+            </div>
         </div>
 
-        <!-- Tela de Resultado -->
-        <div id="resultScreen">
-            <!-- Ícone e Temperatura lado a lado -->
-            <div class="weather-header">
-                <i class="weather-icon" id="weatherIcon"></i>
-                <p id="temperature"></p>
+        <!-- Tela de Tabela Comparativa -->
+        <div id="tableScreen">
+            <h1>Comparação de Climas</h1>
+
+            <div class="table-container">
+                <table id="weatherTable">
+                    <thead>
+                        <tr>
+                            <th>Cidade</th>
+                            <th>Clima</th>
+                            <th>Temperatura</th>
+                            <th>Umidade</th>
+                            <th>Vento</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
             </div>
 
-            <!-- Cidade e Data embaixo -->
-            <div class="weather-info">
-                <h2 id="cityName"></h2>
-                <p id="description"></p>
-                <p id="currentDate"></p>
+            <div class="home-action">
+                <button class="back-btn" id="backBtn" title="Voltar ao início">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+                    </svg>
+                </button>
             </div>
-
-            <!-- Botão para voltar -->
-            <button id="backBtn" title="Voltar ao início">
-                <img src="./assets/images/home.svg" alt="Ícone de voltar">
-            </button>
         </div>
     </div>
 
