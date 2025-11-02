@@ -29,74 +29,77 @@
 
 <body>
 
-    <div class="container">
-        <!-- Tela de Busca -->
-        <div id="searchScreen">
-            <h1>Previsão do Tempo</h1>
+    <main class="container">
 
-            <div class="search-area">
+        <h1>Previsão do Tempo</h1>
+        
+        <!-- Tela de Busca -->
+        <section id="searchScreen">
+            <form class="search-area" onsubmit="return false;">
                 <input type="text" id="cityInput" placeholder="Digite o nome da cidade">
                 <button id="searchBtn">Buscar</button>
-            </div>
+            </form>
 
-            <div id="loading">Carregando...</div>
-            <div id="error"></div>
-        </div>
+            <p id="loading">Carregando...</p>
+            <p id="error"></p>
+        </section>
 
         <!-- Tela de Resultado -->
-        <div id="resultScreen">
+        <section id="resultScreen">
             <!-- Ícone e Temperatura -->
-            <div class="weather-header">
+            <header class="weather-header">
                 <i class="weather-icon" id="weatherIcon"></i>
                 <p id="temperature"></p>
-            </div>
+            </header>
 
             <!-- Cidade e Data -->
-            <div class="weather-info">
+            <article class="weather-info">
                 <h2 id="cityName"></h2>
                 <p id="description"></p>
                 <p id="currentDate"></p>
 
                 <!-- Temperaturas Máxima e Mínima -->
-                <div class="temp-range">
-                    <div class="temp-item">
+                <section class="temp-range">
+                    <article class="temp-item">
                         <span class="temp-label">Máxima</span>
                         <span class="temp-value" id="tempMax"></span>
-                    </div>
-                    <div class="temp-item">
+                    </article>
+                    <article class="temp-item">
                         <span class="temp-label">Mínima</span>
                         <span class="temp-value" id="tempMin"></span>
-                    </div>
-                </div>
-            </div>
+                    </article>
+                </section>
+            </article>
 
             <!-- Detalhes Meteorológicos -->
-            <div class="weather-details">
-                <div class="detail-card">
+            <section class="weather-details">
+                <article class="detail-card">
                     <i class="wi wi-humidity detail-icon"></i>
                     <span class="detail-label">Umidade</span>
                     <span class="detail-value" id="humidity">--</span>
-                </div>
-                <div class="detail-card">
+                </article>
+                <article class="detail-card">
                     <i class="wi wi-strong-wind detail-icon"></i>
                     <span class="detail-label">Vento</span>
                     <span class="detail-value" id="windSpeed">--</span>
-                </div>
-                <div class="detail-card">
+                </article>
+                <article class="detail-card">
                     <i class="wi wi-raindrops detail-icon"></i>
                     <span class="detail-label">Precipitação</span>
                     <span class="detail-value" id="precipitation">--</span>
-                </div>
-            </div>
+                </article>
+            </section>
 
             <!-- Botão para voltar -->
-            <button class="back-btn" id="backBtn" title="Voltar ao início">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
-                </svg>
-            </button>
-        </div>
-    </div>
+            <footer>
+                <button class="back-btn" id="backBtn" title="Voltar ao início">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+                    </svg>
+                </button>
+            </footer>
+        </section>
+    </main>
 
     <script src="./assets/js/api.js"></script>
 </body>
