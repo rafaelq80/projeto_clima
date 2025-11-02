@@ -16,7 +16,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Projeto Previsao do Tempo.">
     <meta name="author" content="Rafael Queiróz">
-    <meta name="keywords" content="clima, previsão do tempo, Open Meteo, desenvolvimento web, fullstack, HTML, CSS, JavaScript">
+    <meta name="keywords"
+        content="clima, previsão do tempo, Open Meteo, desenvolvimento web, fullstack, HTML, CSS, JavaScript">
 
     <link rel="icon" type="image/svg+xml" href="./assets/images/favicon.svg" />
 
@@ -44,22 +45,55 @@
 
         <!-- Tela de Resultado -->
         <div id="resultScreen">
-            <!-- Ícone e Temperatura lado a lado -->
+            <!-- Ícone e Temperatura -->
             <div class="weather-header">
                 <i class="weather-icon" id="weatherIcon"></i>
                 <p id="temperature"></p>
             </div>
 
-            <!-- Cidade e Data embaixo -->
+            <!-- Cidade e Data -->
             <div class="weather-info">
                 <h2 id="cityName"></h2>
                 <p id="description"></p>
                 <p id="currentDate"></p>
+
+                <!-- Temperaturas Máxima e Mínima -->
+                <div class="temp-range">
+                    <div class="temp-item">
+                        <span class="temp-label">Máxima</span>
+                        <span class="temp-value" id="tempMax"></span>
+                    </div>
+                    <div class="temp-item">
+                        <span class="temp-label">Mínima</span>
+                        <span class="temp-value" id="tempMin"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detalhes Meteorológicos -->
+            <div class="weather-details">
+                <div class="detail-card">
+                    <i class="wi wi-humidity detail-icon"></i>
+                    <span class="detail-label">Umidade</span>
+                    <span class="detail-value" id="humidity">--</span>
+                </div>
+                <div class="detail-card">
+                    <i class="wi wi-strong-wind detail-icon"></i>
+                    <span class="detail-label">Vento</span>
+                    <span class="detail-value" id="windSpeed">--</span>
+                </div>
+                <div class="detail-card">
+                    <i class="wi wi-raindrops detail-icon"></i>
+                    <span class="detail-label">Precipitação</span>
+                    <span class="detail-value" id="precipitation">--</span>
+                </div>
             </div>
 
             <!-- Botão para voltar -->
-            <button id="backBtn" title="Voltar ao início">
-                <img src="./assets/images/home.svg" alt="Ícone de voltar">
+            <button class="back-btn" id="backBtn" title="Voltar ao início">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+                </svg>
             </button>
         </div>
     </div>

@@ -1,4 +1,3 @@
-
 describe('App de Clima - Testes Unitários', () => {
 
     let originalFetch;
@@ -34,7 +33,14 @@ describe('App de Clima - Testes Unitários', () => {
             const mockWeatherData = {
                 current: {
                     temperature_2m: 25.5,
-                    weather_code: 0
+                    relative_humidity_2m: 65,
+                    wind_speed_10m: 10.5,
+                    weather_code: 0,
+                    precipitation: 0
+                },
+                daily: {
+                    temperature_2m_max: [28.0],
+                    temperature_2m_min: [18.5]
                 }
             };
 
@@ -54,7 +60,7 @@ describe('App de Clima - Testes Unitários', () => {
             const geoResponse = await fetch(geoUrl);
             const geoData = await geoResponse.json();
 
-            const weatherUrl = 'https://api.open-meteo.com/v1/forecast?latitude=-23.5505&longitude=-46.6333&current=temperature_2m,weather_code';
+            const weatherUrl = 'https://api.open-meteo.com/v1/forecast?latitude=-23.5505&longitude=-46.6333&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code,precipitation&daily=temperature_2m_max,temperature_2m_min&timezone=auto';
             const weatherResponse = await fetch(weatherUrl);
             const weatherData = await weatherResponse.json();
 
@@ -67,10 +73,18 @@ describe('App de Clima - Testes Unitários', () => {
                 country: 'Brasil'
             });
 
-            // Assert - Dados meteorológicos
+            // Assert - Dados meteorológicos atuais
             expect(weatherData.current).toBeDefined();
             expect(weatherData.current.temperature_2m).toBe(25.5);
+            expect(weatherData.current.relative_humidity_2m).toBe(65);
+            expect(weatherData.current.wind_speed_10m).toBe(10.5);
             expect(weatherData.current.weather_code).toBe(0);
+            expect(weatherData.current.precipitation).toBe(0);
+            
+            // Assert - Dados meteorológicos diários
+            expect(weatherData.daily).toBeDefined();
+            expect(weatherData.daily.temperature_2m_max[0]).toBe(28.0);
+            expect(weatherData.daily.temperature_2m_min[0]).toBe(18.5);
             
             // Assert - Fetch foi chamado duas vezes
             expect(global.fetch).toHaveBeenCalledTimes(2);
