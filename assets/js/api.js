@@ -1,3 +1,20 @@
+ /**
+ * @fileoverview Sistema de Previsão do Tempo
+ * @description Aplicação web para consulta de dados meteorológicos em tempo real.
+ * Utiliza as APIs Open-Meteo (Geocoding e Weather) para buscar informações climáticas
+ * de cidades ao redor do mundo.
+ *
+ * @author Rafael Queiróz
+ * @version 1.0.0
+ * @license MIT
+ */
+
+// ===== SELEÇÃO DE ELEMENTOS DO DOM =====
+/**
+ * Elementos HTML manipulados pela aplicação
+ * @type {HTMLElement}
+ */
+
  // Elementos DOM
         const cityInput = document.getElementById('cityInput');
         const addBtn = document.getElementById('addBtn');

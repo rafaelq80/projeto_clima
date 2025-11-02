@@ -28,36 +28,40 @@
 </head>
 
 <body>
-    <div class="container">
+    <main class="container">
         <!-- Tela de Busca -->
-        <div id="searchScreen">
-            <h1>Previsão do Tempo</h1>
-            <h2>Compare até 5 Cidades</h2>
+        <section id="searchScreen">
+            <header>
+                <h1>Previsão do Tempo</h1>
+                <h2>Compare até 5 Cidades</h2>
+            </header>
 
-            <div class="search-area">
+            <form class="search-area" onsubmit="return false;">
                 <input type="text" id="cityInput" placeholder="Digite o nome da cidade">
                 <button id="addBtn">Adicionar</button>
-            </div>
+            </form>
 
-            <div class="messages-area">
-                <div id="loading">Carregando...</div>
-                <div id="error"></div>
-                <div id="success"></div>
-            </div>
+            <section class="messages-area">
+                <p id="loading">Carregando...</p>
+                <p id="error"></p>
+                <p id="success"></p>
+            </section>
 
-            <div class="cities-list" id="citiesList"></div>
+            <section class="cities-list" id="citiesList"></section>
 
-            <div class="actions" id="actions" style="display: none;">
+            <section class="actions" id="actions" style="display: none;">
                 <button class="compare-btn" id="compareBtn">Comparar Climas</button>
                 <button class="clear-btn" id="clearBtn">Limpar Tudo</button>
-            </div>
-        </div>
+            </section>
+        </section>
 
         <!-- Tela de Tabela Comparativa -->
-        <div id="tableScreen">
-            <h1>Comparação de Climas</h1>
+        <section id="tableScreen">
+            <header>
+                <h1>Comparação de Climas</h1>
+            </header>
 
-            <div class="table-container">
+            <article class="table-container">
                 <table id="weatherTable">
                     <thead>
                         <tr>
@@ -70,17 +74,15 @@
                     </thead>
                     <tbody id="tableBody"></tbody>
                 </table>
-            </div>
+            </article>
 
-            <div class="home-action">
-                <button class="back-btn" id="backBtn" title="Voltar ao início">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
-                    </svg>
+            <footer class="home-action">
+                <button id="backBtn" title="Voltar ao início">
+                    <img src="./assets/images/home.svg" alt="Ícone de voltar">
                 </button>
-            </div>
-        </div>
-    </div>
+            </footer>
+        </section>
+    </main>
 
     <script src="./assets/js/api.js"></script>
 </body>
