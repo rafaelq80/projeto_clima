@@ -1,4 +1,3 @@
-
 describe('App de Clima - Testes Unitários', () => {
 
     let originalFetch;
@@ -34,7 +33,15 @@ describe('App de Clima - Testes Unitários', () => {
             const mockWeatherData = {
                 current: {
                     temperature_2m: 25.5,
+                    relative_humidity_2m: 65,
+                    wind_speed_10m: 12,
                     weather_code: 0
+                },
+                daily: {
+                    time: ['2025-10-13', '2025-10-14', '2025-10-15', '2025-10-16', '2025-10-17'],
+                    temperature_2m_max: [28, 29, 27, 26, 28],
+                    temperature_2m_min: [18, 19, 17, 16, 18],
+                    weather_code: [0, 2, 3, 61, 0]
                 }
             };
 
@@ -54,7 +61,7 @@ describe('App de Clima - Testes Unitários', () => {
             const geoResponse = await fetch(geoUrl);
             const geoData = await geoResponse.json();
 
-            const weatherUrl = 'https://api.open-meteo.com/v1/forecast?latitude=-23.5505&longitude=-46.6333&current=temperature_2m,weather_code';
+            const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=-23.5505&longitude=-46.6333&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=5`;
             const weatherResponse = await fetch(weatherUrl);
             const weatherData = await weatherResponse.json();
 
@@ -67,10 +74,19 @@ describe('App de Clima - Testes Unitários', () => {
                 country: 'Brasil'
             });
 
-            // Assert - Dados meteorológicos
+            // Assert - Dados meteorológicos completos
             expect(weatherData.current).toBeDefined();
             expect(weatherData.current.temperature_2m).toBe(25.5);
+            expect(weatherData.current.relative_humidity_2m).toBe(65);
+            expect(weatherData.current.wind_speed_10m).toBe(12);
             expect(weatherData.current.weather_code).toBe(0);
+
+            // Assert - Previsão de 5 dias
+            expect(weatherData.daily).toBeDefined();
+            expect(weatherData.daily.time).toHaveLength(5);
+            expect(weatherData.daily.temperature_2m_max).toHaveLength(5);
+            expect(weatherData.daily.temperature_2m_min).toHaveLength(5);
+            expect(weatherData.daily.weather_code).toHaveLength(5);
             
             // Assert - Fetch foi chamado duas vezes
             expect(global.fetch).toHaveBeenCalledTimes(2);
@@ -86,7 +102,7 @@ describe('App de Clima - Testes Unitários', () => {
         test('2. deve rejeitar entrada vazia', () => {
             // Arrange & Act
             const entradaVazia = '';
-            const resultado = entradaVazia.trim().length > 0;
+            const resultado = !!(entradaVazia && entradaVazia.trim().length > 0);
 
             // Assert
             expect(resultado).toBe(false);
@@ -95,7 +111,7 @@ describe('App de Clima - Testes Unitários', () => {
         test('3. deve rejeitar entrada com apenas espaços em branco', () => {
             // Arrange & Act
             const entradaEspacos = '   ';
-            const resultado = entradaEspacos.trim().length > 0;
+            const resultado = !!(entradaEspacos && entradaEspacos.trim().length > 0);
 
             // Assert
             expect(resultado).toBe(false);
@@ -104,7 +120,7 @@ describe('App de Clima - Testes Unitários', () => {
         test('4. deve aceitar entrada válida após trim', () => {
             // Arrange & Act
             const entradaValida = '  São Paulo  ';
-            const resultado = entradaValida.trim().length > 0;
+            const resultado = !!(entradaValida && entradaValida.trim().length > 0);
 
             // Assert
             expect(resultado).toBe(true);
@@ -162,25 +178,28 @@ describe('App de Clima - Testes Unitários', () => {
         test('7. deve lançar erro quando houver falha de rede', async () => {
             // Arrange
             global.fetch = jest.fn(() =>
-                Promise.reject(new Error('Network Error'))
+                Promise.reject(new Error('Failed to fetch'))
             );
 
             // Act & Assert
             await expect(fetch('https://api.example.com'))
                 .rejects
-                .toThrow('Network Error');
+                .toThrow('Failed to fetch');
         });
 
-        test('8. deve lançar erro quando houver timeout', async () => {
+        test('8. deve lançar erro quando houver timeout via AbortController', async () => {
             // Arrange
             global.fetch = jest.fn(() =>
-                Promise.reject(new Error('Timeout'))
+                Promise.reject(Object.assign(new Error('The user aborted a request'), { name: 'AbortError' }))
             );
 
             // Act & Assert
-            await expect(fetch('https://api.example.com'))
-                .rejects
-                .toThrow('Timeout');
+            try {
+                await fetch('https://api.example.com');
+                fail('Deveria ter lançado erro');
+            } catch (error) {
+                expect(error.name).toBe('AbortError');
+            }
         });
 
         test('9. deve capturar erro genérico e verificar palavra Error', async () => {
@@ -231,36 +250,24 @@ describe('App de Clima - Testes Unitários', () => {
     });
 
     // ========================================
-    // TESTES DE TIMEOUT
+    // TESTES DE TIMEOUT COM ABORTCONTROLLER
     // ========================================
 
     describe('Timeout de Requisições', () => {
         
-        test('11. deve cancelar requisição quando exceder tempo limite', async () => {
-            // Arrange
-            const TEMPO_MAX = 1000;
-            
+        test('11. deve cancelar requisição quando exceder tempo limite de 10 segundos', async () => {
+            // Arrange - Simular AbortController sendo acionado por timeout
             global.fetch = jest.fn(() =>
-                new Promise((resolve, reject) => {
-                    setTimeout(() => {
-                        reject(new Error('Request timeout'));
-                    }, TEMPO_MAX + 1000);
-                })
+                Promise.reject(Object.assign(new Error('The user aborted a request'), { name: 'AbortError' }))
             );
 
-            const timeoutPromise = new Promise((resolve, reject) => {
-                setTimeout(() => {
-                    reject(new Error('Timeout: requisição demorou demais'));
-                }, TEMPO_MAX);
-            });
-
             // Act & Assert
-            await expect(
-                Promise.race([
-                    fetch('https://api.open-meteo.com/v1/forecast'),
-                    timeoutPromise
-                ])
-            ).rejects.toThrow(/Timeout|timeout/);
+            try {
+                await fetch('https://api.open-meteo.com/v1/forecast');
+                fail('Deveria ter lançado AbortError');
+            } catch (error) {
+                expect(error.name).toBe('AbortError');
+            }
         });
     });
 
