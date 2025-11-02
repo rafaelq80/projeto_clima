@@ -28,41 +28,44 @@
 
 <body>
 
-    <div class="container">
-        <!-- Tela de Busca -->
-        <div id="searchScreen">
-            <h1>Previsão do Tempo</h1>
+    <main class="container">
 
-            <div class="search-area">
+        <h1>Previsão do Tempo</h1>
+        
+        <!-- Tela de Busca -->
+        <section id="searchScreen">
+            <form class="search-area" onsubmit="return false;">
                 <input type="text" id="cityInput" placeholder="Digite o nome da cidade">
                 <button id="searchBtn">Buscar</button>
-            </div>
+            </form>
 
-            <div id="loading">Carregando...</div>
-            <div id="error"></div>
-        </div>
+            <p id="loading">Carregando...</p>
+            <p id="error"></p>
+        </section>
 
         <!-- Tela de Resultado -->
-        <div id="resultScreen">
+        <section id="resultScreen">
             <!-- Ícone e Temperatura lado a lado -->
-            <div class="weather-header">
+            <header class="weather-header">
                 <i class="weather-icon" id="weatherIcon"></i>
                 <p id="temperature"></p>
-            </div>
+            </header>
 
             <!-- Cidade e Data embaixo -->
-            <div class="weather-info">
+            <article class="weather-info">
                 <h2 id="cityName"></h2>
                 <p id="description"></p>
                 <p id="currentDate"></p>
-            </div>
+            </article>
 
             <!-- Botão para voltar -->
-            <button id="backBtn" title="Voltar ao início">
-                <img src="./assets/images/home.svg" alt="Ícone de voltar">
-            </button>
-        </div>
-    </div>
+            <footer>
+                <button id="backBtn" title="Voltar ao início">
+                    <img src="./assets/images/home.svg" alt="Ícone de voltar">
+                </button>
+            </footer>
+        </section>
+    </main>
 
     <!-- Link para os arquivos JavaScript -->
     <script src="./assets/js/api.js"></script>
