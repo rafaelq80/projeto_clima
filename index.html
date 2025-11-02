@@ -2,80 +2,144 @@
 <html lang="pt-BR">
 
 <head>
-    <!-- Servidores de Fontes do Google -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-    <!-- Fonte do Google - Poppins -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
-
-    <!-- Weather Icons CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.12/css/weather-icons.min.css">
 
     <meta charset="UTF-8">
+
+    <!-- ===== SECURITY HEADERS ===== -->
+    <!-- Content Security Policy - Proteção contra XSS e injeção de código -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' 'unsafe-inline';
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com;
+        font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:;
+        img-src 'self' data: https:;
+        connect-src 'self' https://geocoding-api.open-meteo.com https://api.open-meteo.com https://cdnjs.cloudflare.com;
+        base-uri 'self';
+        form-action 'self';
+    ">
+
+    <!-- Controle de referrer -->
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+
+    <!-- ===== PRECONNECT PARA PERFORMANCE ===== -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://geocoding-api.open-meteo.com">
+    <link rel="preconnect" href="https://api.open-meteo.com">
+
+    <!-- ===== FONTES E ÍCONES ===== -->
+    <!-- Fonte do Google - Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet" crossorigin="anonymous">
+
+    <!-- Weather Icons CSS com Subresource Integrity -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.12/css/weather-icons.min.css"
+        integrity="sha512-r/Gan7PMSRovDus++vDS2Ayutc/cSdl268u047n4z+k7GYuR7Hiw71FsT3QQxdKJBVHYttOJ6IGLnlM9IoMToQ=="
+        crossorigin="anonymous">
+
+    <!-- ===== META TAGS BÁSICAS ===== -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Projeto Previsao do Tempo.">
-    <meta name="author" content="Rafael Queiróz">
+    <meta name="description"
+        content="Aplicação de previsão do tempo em tempo real com segurança aprimorada. Consulte o clima de qualquer cidade do mundo.">
+    <meta name="author" content="Rafael Queiroz">
     <meta name="keywords"
-        content="clima, previsão do tempo, Open Meteo, desenvolvimento web, fullstack, HTML, CSS, JavaScript">
+        content="clima, previsão do tempo, Open Meteo, desenvolvimento web, fullstack, HTML, CSS, JavaScript, segurança">
+    <meta name="theme-color" content="#87CEEB">
 
-    <link rel="icon" type="image/svg+xml" href="./assets/images/favicon.svg" />
+    <!-- ===== FAVICON ===== -->
+    <link rel="icon" type="image/svg+xml" href="./assets/images/favicon.svg" >
 
-    <title>Previsão do Tempo</title>
+    <!-- ===== TÍTULO ===== -->
+    <title>Previsão do Tempo - Seguro e Confiável</title>
 
-    <!-- Link para o arquivo CSS -->
+    <!-- ===== STYLESHEET ===== -->
     <link rel="stylesheet" href="./assets/css/styles.css">
 </head>
 
 <body>
 
+    <!-- ===== CONTEÚDO PRINCIPAL ===== -->
     <main class="container">
 
+        <!-- Título da aplicação -->
         <h1>Previsão do Tempo</h1>
-        
-        <!-- Tela de Busca -->
-        <section id="searchScreen">
+
+        <!-- ===== SEÇÃO: BUSCA DE CIDADE ===== -->
+        <section id="searchScreen" aria-label="Busca de cidade">
+            
             <form class="search-area" onsubmit="return false;">
-                <input type="text" id="cityInput" placeholder="Digite o nome da cidade">
-                <button id="searchBtn">Buscar</button>
+                <input 
+                    type="text" 
+                    id="cityInput" 
+                    placeholder="Digite o nome da cidade" 
+                    maxlength="100"
+                    autocomplete="off" 
+                    aria-label="Nome da cidade">
+                
+                <button 
+                    id="searchBtn" 
+                    type="button" 
+                    aria-label="Buscar previsão do tempo">
+                    Buscar
+                </button>
             </form>
 
-            <p id="loading">Carregando...</p>
-            <p id="error"></p>
+            <!-- Mensagens de feedback -->
+            <p id="loading" aria-live="polite">Carregando...</p>
+            <p id="error" role="alert" aria-live="assertive"></p>
         </section>
 
-        <!-- Tela de Resultado -->
-        <section id="resultScreen">
-            <!-- Ícone e Temperatura -->
+        <!-- ===== SEÇÃO: RESULTADO DA PREVISÃO ===== -->
+        <section id="resultScreen" aria-label="Resultado da previsão" aria-live="polite">
+            
+            <!-- Header: Ícone e temperatura atual -->
             <header class="weather-header">
-                <i class="weather-icon" id="weatherIcon"></i>
-                <p id="temperature"></p>
+                <i class="weather-icon" id="weatherIcon" aria-hidden="true"></i>
+                <p id="temperature" aria-label="Temperatura atual"></p>
             </header>
 
-            <!-- Cidade e Data -->
+            <!-- Informações da cidade -->
             <article class="weather-info">
                 <h2 id="cityName"></h2>
-                <p id="description"></p>
-                <p id="currentDate"></p>
+                <p id="description" aria-label="Condições climáticas"></p>
+                <time id="currentDate"></time>
             </article>
 
-            <!-- Previsão dos Próximos 4 Dias -->
-            <section class="forecast-container">
+            <!-- Previsão dos próximos 4 dias -->
+            <section class="forecast-container" aria-label="Previsão dos próximos dias">
                 <h3>Próximos Dias</h3>
-                <div class="forecast-grid" id="forecastGrid">
-                    <!-- Os cards serão inseridos aqui via JavaScript -->
+                <div class="forecast-grid" id="forecastGrid" role="list">
+                    <!-- Cards inseridos via JavaScript -->
                 </div>
             </section>
 
-            <!-- Botão para voltar -->
-            <footer>
-                <button id="backBtn" title="Voltar ao início">
+            <!-- Botão voltar -->
+            <nav>
+                <button 
+                    id="backBtn" 
+                    title="Voltar ao início" 
+                    aria-label="Voltar para nova busca">
                     <img src="./assets/images/home.svg" alt="Ícone de voltar">
                 </button>
-            </footer>
+            </nav>
         </section>
+
     </main>
 
+     <!-- ===== FOOTER: AVISOS E ATRIBUIÇÕES ===== -->
+    <footer class="page-footer">
+        <p>
+            🔒 Esta aplicação não coleta, armazena ou compartilha dados pessoais. 
+            As buscas são processadas em tempo real e não são registradas.
+        </p>
+        <p>
+            📊 Dados meteorológicos fornecidos por
+            <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a>
+            sob licença
+            <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>
+        </p>
+    </footer>
+    
+    <!-- ===== JAVASCRIPT - Carregado no final para melhor performance ===== -->
     <script src="./assets/js/api.js"></script>
 </body>
 

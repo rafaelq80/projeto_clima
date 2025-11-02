@@ -1,60 +1,54 @@
-/* Paleta de cores */
+/* ===== VARIÁVEIS DE CORES ===== */
 :root {
-    /* Azuis do céu */
+    /* Cores principais - Azul céu */
     --sky-light: #E0F6FF;
     --sky-medium: #87CEEB;
     --sky-dark: #4A90E2;
     --sky-darker: #2E5C8A;
 
-    /* Cores de noite */
+    /* Cores modo noturno */
     --night-dark: #1a1a2e;
     --night-medium: #16213e;
     --night-light: #0f3460;
 
-    /* Cores de apoio */
-    --cloud-white: #FFFFFF;
-    --cloud-gray: #F5F5F5;
+    /* Cores neutras */
+    --white: #FFFFFF;
+    --gray-light: #F5F5F5;
     --text-dark: #2C3E50;
     --text-light: #5A6C7D;
 
-    /* Cores de status */
+    /* Cores de feedback */
     --error-bg: #FFE6E6;
     --error-text: #C41E3A;
 
-    /* Sombras */
+    /* Efeitos visuais */
     --shadow-light: rgba(0, 0, 0, 0.08);
     --shadow-medium: rgba(0, 0, 0, 0.12);
-
-    /* Weather header */
-    --weather-bg-start: #B8D8E8;
-    --weather-bg-end: #D6E4EC;
 }
 
-/* Reset básico */
+/* ===== RESET BÁSICO ===== */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-/* Estilo do corpo da página */
+/* ===== BODY - PÁGINA PRINCIPAL ===== */
 body {
     font-family: 'Poppins', Arial, sans-serif;
     min-height: 100vh;
     display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 1.25rem;
+    flex-direction: column;
+    padding: 1.25rem 1.25rem 0;
     background: linear-gradient(to bottom, var(--sky-medium), var(--sky-light));
     transition: background 0.5s ease;
 }
 
-/* Background noturno */
 body.night-mode {
     background: linear-gradient(to bottom, var(--night-dark), var(--night-medium));
 }
 
-/* Container principal */
+/* ===== CONTAINER PRINCIPAL ===== */
 .container {
     display: flex;
     flex-direction: column;
@@ -62,13 +56,14 @@ body.night-mode {
     gap: 1.5rem;
     max-width: 28.125rem;
     width: 100%;
+    margin: auto;
     padding: 2.5rem 1.875rem;
     border-radius: 1.25rem;
-    background-color: var(--cloud-white);
+    background-color: var(--white);
     box-shadow: 0 0.625rem 2.5rem var(--shadow-medium);
 }
 
-/* Título principal */
+/* ===== TÍTULO PRINCIPAL ===== */
 h1 {
     text-align: center;
     color: var(--sky-darker);
@@ -86,14 +81,13 @@ h1 {
     width: 100%;
 }
 
-/* Área de busca */
 .search-area {
     display: flex;
     gap: 0.625rem;
     width: 100%;
 }
 
-/* Campo de input */
+/* Input de busca */
 input {
     flex: 1;
     padding: 0.875rem 1rem;
@@ -101,7 +95,7 @@ input {
     border-radius: 0.625rem;
     font-size: 0.9375rem;
     font-family: 'Poppins', Arial, sans-serif;
-    background-color: var(--cloud-gray);
+    background-color: var(--gray-light);
     color: var(--text-dark);
     transition: all 0.3s ease;
 }
@@ -109,7 +103,7 @@ input {
 input:focus {
     outline: none;
     border-color: var(--sky-dark);
-    background-color: var(--cloud-white);
+    background-color: var(--white);
     box-shadow: 0 0 0 0.1875rem rgba(74, 144, 226, 0.1);
 }
 
@@ -117,11 +111,26 @@ input::placeholder {
     color: var(--text-light);
 }
 
-/* Botões */
+input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+input.invalid {
+    border-color: var(--error-text);
+    background-color: var(--error-bg);
+}
+
+input.invalid:focus {
+    border-color: var(--error-text);
+    box-shadow: 0 0 0 0.1875rem rgba(196, 30, 58, 0.1);
+}
+
+/* Botão de busca */
 button {
     padding: 0.875rem 1.75rem;
     background-color: var(--sky-dark);
-    color: var(--cloud-white);
+    color: var(--white);
     border: none;
     border-radius: 0.625rem;
     cursor: pointer;
@@ -142,6 +151,16 @@ button:active {
     transform: translateY(0);
 }
 
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+button:disabled:hover {
+    transform: none;
+    background-color: var(--sky-dark);
+}
+
 /* Mensagem de carregamento */
 #loading {
     display: none;
@@ -149,6 +168,16 @@ button:active {
     font-size: 0.9375rem;
     font-weight: 500;
     padding: 0.75rem;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
 }
 
 /* Mensagem de erro */
@@ -173,7 +202,7 @@ button:active {
     gap: 1.5rem;
 }
 
-/* Área superior: Ícone e Temperatura lado a lado */
+/* Header com ícone e temperatura */
 .weather-header {
     display: flex;
     align-items: center;
@@ -181,12 +210,11 @@ button:active {
     gap: 1.25rem;
     padding: 1.875rem 1.25rem;
     width: 100%;
-    background: linear-gradient(135deg, var(--weather-bg-start) 0%, var(--weather-bg-end) 100%);
+    background: linear-gradient(135deg, #B8D8E8 0%, #D6E4EC 100%);
     border-radius: 1rem;
     box-shadow: 0 0.25rem 1rem var(--shadow-light);
 }
 
-/* Ícone do clima */
 .weather-icon {
     font-size: 5rem;
     line-height: 1;
@@ -197,7 +225,6 @@ button:active {
     justify-content: center;
 }
 
-/* Animação de zoom para o ícone */
 @keyframes float {
     0%, 100% {
         transform: scale(1);
@@ -207,7 +234,6 @@ button:active {
     }
 }
 
-/* Temperatura */
 #temperature {
     color: var(--text-dark);
     font-size: 4.5rem;
@@ -219,13 +245,13 @@ button:active {
     gap: 0.5rem;
 }
 
-#temperature .temp-min-current {
+.temp-min-current {
     font-size: 2.5rem;
     color: var(--text-light);
     font-weight: 500;
 }
 
-/* Área inferior: Cidade e Data */
+/* Informações da cidade */
 .weather-info {
     display: flex;
     flex-direction: column;
@@ -234,7 +260,6 @@ button:active {
     width: 100%;
 }
 
-/* Nome da cidade */
 #cityName {
     color: var(--sky-darker);
     font-size: 1.75rem;
@@ -242,14 +267,6 @@ button:active {
     text-align: center;
 }
 
-/* Data atual */
-#currentDate {
-    color: var(--text-light);
-    font-size: 1rem;
-    font-weight: 400;
-}
-
-/* Descrição do clima */
 #description {
     color: var(--text-dark);
     font-size: 1.125rem;
@@ -257,7 +274,13 @@ button:active {
     font-weight: 500;
 }
 
-/* ===== PREVISÃO 5 DIAS ===== */
+#currentDate {
+    color: var(--text-light);
+    font-size: 1rem;
+    font-weight: 400;
+}
+
+/* ===== PREVISÃO DOS PRÓXIMOS 4 DIAS ===== */
 .forecast-container {
     width: 100%;
     display: flex;
@@ -281,7 +304,7 @@ button:active {
 }
 
 .forecast-card {
-    background: linear-gradient(135deg, var(--cloud-gray) 0%, var(--cloud-white) 100%);
+    background: linear-gradient(135deg, var(--gray-light) 0%, var(--white) 100%);
     border-radius: 0.75rem;
     padding: 1rem 1.25rem;
     display: grid;
@@ -297,7 +320,7 @@ button:active {
     box-shadow: 0 0.25rem 0.75rem var(--shadow-medium);
 }
 
-/* Coluna 1: Data */
+/* Data do card */
 .forecast-date {
     display: flex;
     flex-direction: column;
@@ -316,7 +339,7 @@ button:active {
     color: var(--text-light);
 }
 
-/* Coluna 2: Clima */
+/* Clima do card */
 .forecast-weather {
     display: flex;
     flex-direction: column;
@@ -341,7 +364,7 @@ button:active {
     text-align: center;
 }
 
-/* Coluna 3: Temperaturas */
+/* Temperaturas do card */
 .forecast-temps {
     display: flex;
     flex-direction: column;
@@ -391,7 +414,7 @@ button:active {
     text-align: right;
 }
 
-/* Botão de voltar */
+/* Botão voltar */
 #backBtn {
     margin-top: 0.5rem;
     background-color: var(--sky-dark);
@@ -420,6 +443,53 @@ button:active {
 
 #backBtn:hover img {
     transform: scale(1.1);
+}
+
+/* ===== FOOTER ===== */
+.page-footer {
+    width: 100%;
+    margin-top: auto;
+    padding: 1.5rem;
+
+    text-align: center;
+}
+
+.page-footer p {
+    color: var(--text-light);
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    margin: 0 0 0.75rem 0;
+}
+
+.page-footer p:last-child {
+    margin-bottom: 0;
+}
+
+.page-footer a {
+    color: var(--sky-dark);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.page-footer a:hover {
+    text-decoration: underline;
+}
+
+/* Modo noturno */
+
+body.night-mode .page-footer p {
+    color: #B0B0B0;
+}
+
+body.night-mode .page-footer a {
+    color: var(--sky-light);
+}
+
+/* ===== ACESSIBILIDADE ===== */
+button:focus-visible,
+input:focus-visible {
+    outline: 0.125rem solid var(--sky-dark);
+    outline-offset: 0.125rem;
 }
 
 /* ===== RESPONSIVIDADE ===== */
@@ -466,6 +536,7 @@ button:active {
 @media (max-width: 30rem) {
     .container {
         padding: 1.875rem 1.25rem;
+        margin-bottom: 1rem;
     }
 
     h1 {
@@ -496,7 +567,7 @@ button:active {
         gap: 0.25rem;
     }
 
-    #temperature .temp-min-current {
+    .temp-min-current {
         font-size: 1.25rem;
     }
 
@@ -574,5 +645,13 @@ button:active {
     #backBtn img {
         width: 1.125rem;
         height: 1.125rem;
+    }
+
+    .page-footer {
+        padding: 1rem;
+    }
+
+    .page-footer p {
+        font-size: 0.75rem;
     }
 }

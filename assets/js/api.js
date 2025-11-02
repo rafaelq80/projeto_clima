@@ -1,11 +1,11 @@
 /**
- * @fileoverview Sistema de Previsão do Tempo
+ * @fileoverview Sistema de Previsão do Tempo - Versão com Segurança Aprimorada
  * @description Aplicação web para consulta de dados meteorológicos em tempo real.
  * Utiliza as APIs Open-Meteo (Geocoding e Weather) para buscar informações climáticas
  * de cidades ao redor do mundo.
  * 
- * @author Rafael Queiróz
- * @version 2.0.0
+ * @author Rafael Queiroz
+ * @version 2.1.0 - Segurança Aprimorada
  * @license MIT
  */
 
@@ -37,23 +37,218 @@ const forecastGrid = document.getElementById('forecastGrid');
 const TIMEOUT_MS = 10000;
 
 /**
+ * Intervalo mínimo entre buscas consecutivas (throttling)
+ * @constant {number}
+ * @default 2000
+ */
+const INTERVALO_MINIMO_MS = 2000;
+
+/**
+ * Tamanho máximo permitido para nome de cidade
+ * @constant {number}
+ * @default 100
+ */
+const MAX_TAMANHO_CIDADE = 100;
+
+/**
  * Mensagens de erro padronizadas para diferentes cenários
  * @constant {Object.<string, string>}
- * @property {string} CIDADE_VAZIA - Mensagem quando input está vazio
- * @property {string} CIDADE_NAO_ENCONTRADA - Mensagem quando cidade não existe
- * @property {string} TIMEOUT - Mensagem quando requisição excede tempo limite
- * @property {string} REDE - Mensagem para erros de conexão
- * @property {string} SERVIDOR - Mensagem para erros 5xx
- * @property {string} GENERICO - Mensagem padrão para erros não identificados
  */
 const MENSAGENS_ERRO = {
     CIDADE_VAZIA: 'Por favor, digite o nome de uma cidade.',
+    CIDADE_INVALIDA: 'Nome de cidade inválido. Use apenas letras, números e hífens.',
     CIDADE_NAO_ENCONTRADA: 'Cidade não encontrada. Tente novamente.',
     TIMEOUT: 'A requisição demorou muito. Verifique sua conexão.',
     REDE: 'Erro de conexão. Verifique sua internet.',
     SERVIDOR: 'Erro no servidor. Tente novamente mais tarde.',
-    GENERICO: 'Erro ao buscar dados. Tente novamente.'
+    AGUARDAR: 'Aguarde alguns segundos antes de buscar novamente.',
+    GENERICO: 'Erro ao buscar dados. Tente novamente.',
+    DADOS_INVALIDOS: 'Dados recebidos são inválidos. Tente outra cidade.'
 };
+
+// ===== VARIÁVEIS DE CONTROLE DE THROTTLING =====
+/**
+ * Flag para prevenir múltiplas requisições simultâneas
+ * @type {boolean}
+ */
+let buscaEmAndamento = false;
+
+/**
+ * Timestamp da última busca realizada
+ * @type {number}
+ */
+let ultimaBusca = 0;
+
+/**
+ * Timeout para debouncing do input
+ * @type {number}
+ */
+let timeoutInput;
+
+// ===== DETECÇÃO DE AMBIENTE =====
+/**
+ * Verifica se está em modo de produção
+ * @constant {boolean}
+ */
+const MODO_PRODUCAO = window.location.hostname !== 'localhost' && 
+                      window.location.hostname !== '127.0.0.1';
+
+// ===== FUNÇÕES DE SEGURANÇA =====
+
+/**
+ * Sanitiza texto removendo caracteres potencialmente perigosos
+ * Protege contra XSS e injection attacks
+ * 
+ * @param {string} texto - Texto a ser sanitizado
+ * @returns {string} Texto limpo e seguro
+ * 
+ * @example
+ * sanitizarTexto('<script>alert("xss")</script>');
+ * // 'scriptalert(xss)/script'
+ */
+function sanitizarTexto(texto) {
+    if (!texto || typeof texto !== 'string') return '';
+    
+    return texto
+        .replace(/[<>"'`]/g, '') // Remove caracteres perigosos HTML/JS
+        .replace(/[{}()[\]\\;]/g, '') // Remove caracteres de código
+        .trim()
+        .slice(0, MAX_TAMANHO_CIDADE); // Limita tamanho
+}
+
+/**
+ * Valida se a entrada do usuário é segura e válida
+ * Implementa validação robusta contra injection attacks
+ * 
+ * @param {string} cidade - Nome da cidade digitado pelo usuário
+ * @returns {boolean} True se válido, false caso contrário
+ * 
+ * @example
+ * validarEntrada('São Paulo');  // true
+ * validarEntrada('<script>');   // false
+ * validarEntrada('A'.repeat(200)); // false
+ */
+function validarEntrada(cidade) {
+    // Validação de tipo e existência
+    if (!cidade || typeof cidade !== 'string') {
+        return false;
+    }
+    
+    const cidadeTrim = cidade.trim();
+    
+    // Validação de tamanho
+    if (cidadeTrim.length === 0) {
+        return false;
+    }
+    
+    if (cidadeTrim.length > MAX_TAMANHO_CIDADE) {
+        return false;
+    }
+    
+    // Bloquear caracteres perigosos (XSS, SQL Injection, etc)
+    const caracteresProibidos = /[<>"'`{}()[\]\\;]/;
+    if (caracteresProibidos.test(cidadeTrim)) {
+        return false;
+    }
+    
+    // Aceitar apenas letras (incluindo acentuadas), números, espaços e alguns caracteres válidos
+    // Suporta: São Paulo, Saint-Étienne, New York, etc.
+    const padraoValido = /^[a-zA-ZÀ-ÿ0-9\s\-.,]+$/;
+    if (!padraoValido.test(cidadeTrim)) {
+        return false;
+    }
+    
+    return true;
+}
+
+/**
+ * Valida se as coordenadas estão dentro de ranges geográficos válidos
+ * 
+ * @param {number} latitude - Latitude (-90 a 90)
+ * @param {number} longitude - Longitude (-180 a 180)
+ * @returns {boolean} True se válido
+ * 
+ * @example
+ * validarCoordenadas(-23.5505, -46.6333); // true
+ * validarCoordenadas(91, 0); // false
+ */
+function validarCoordenadas(latitude, longitude) {
+    return typeof latitude === 'number' &&
+           typeof longitude === 'number' &&
+           latitude >= -90 && latitude <= 90 &&
+           longitude >= -180 && longitude <= 180 &&
+           !isNaN(latitude) && !isNaN(longitude);
+}
+
+/**
+ * Valida estrutura e tipos de dados da resposta da API de geocoding
+ * 
+ * @param {Object} resultado - Objeto de resultado da API
+ * @returns {boolean} True se válido
+ */
+function validarDadosGeocodificacao(resultado) {
+    if (!resultado || typeof resultado !== 'object') {
+        return false;
+    }
+    
+    // Validar existência e tipo de campos obrigatórios
+    if (typeof resultado.latitude !== 'number' || 
+        typeof resultado.longitude !== 'number' ||
+        typeof resultado.name !== 'string') {
+        return false;
+    }
+    
+    // Validar coordenadas
+    if (!validarCoordenadas(resultado.latitude, resultado.longitude)) {
+        return false;
+    }
+    
+    return true;
+}
+
+/**
+ * Valida estrutura e tipos de dados da resposta da API de clima
+ * 
+ * @param {Object} dados - Objeto de dados climáticos
+ * @returns {boolean} True se válido
+ */
+function validarDadosClima(dados) {
+    if (!dados || typeof dados !== 'object') {
+        return false;
+    }
+    
+    // Validar estrutura current
+    if (!dados.current || typeof dados.current !== 'object') {
+        return false;
+    }
+    
+    if (typeof dados.current.temperature_2m !== 'number' ||
+        typeof dados.current.weather_code !== 'number') {
+        return false;
+    }
+    
+    // Validar estrutura daily
+    if (!dados.daily || typeof dados.daily !== 'object') {
+        return false;
+    }
+    
+    if (!Array.isArray(dados.daily.time) ||
+        !Array.isArray(dados.daily.temperature_2m_max) ||
+        !Array.isArray(dados.daily.temperature_2m_min) ||
+        !Array.isArray(dados.daily.weather_code)) {
+        return false;
+    }
+    
+    // Validar que todos os arrays têm o mesmo tamanho
+    const tamanho = dados.daily.time.length;
+    if (dados.daily.temperature_2m_max.length !== tamanho ||
+        dados.daily.temperature_2m_min.length !== tamanho ||
+        dados.daily.weather_code.length !== tamanho) {
+        return false;
+    }
+    
+    return true;
+}
 
 // ===== FUNÇÕES UTILITÁRIAS =====
 
@@ -61,10 +256,6 @@ const MENSAGENS_ERRO = {
  * Obtém a data atual formatada em português
  * 
  * @returns {string} Data formatada (ex: "segunda-feira, 13 de outubro de 2025")
- * 
- * @example
- * const data = obterDataAtual();
- * console.log(data); // "segunda-feira, 13 de outubro de 2025"
  */
 function obterDataAtual() {
     const hoje = new Date();
@@ -82,12 +273,6 @@ function obterDataAtual() {
  * 
  * @param {string} dataString - Data no formato ISO (YYYY-MM-DD)
  * @returns {Object} Objeto com dia da semana e data formatada
- * @returns {string} returns.diaSemana - Dia da semana (ex: "Terça-feira")
- * @returns {string} returns.diaEMes - Dia e mês (ex: "14 de outubro")
- * 
- * @example
- * formatarDiaSemana('2025-10-14');
- * // { diaSemana: "Terça-feira", diaEMes: "14 de outubro" }
  */
 function formatarDiaSemana(dataString) {
     const data = new Date(dataString + 'T12:00:00');
@@ -105,21 +290,6 @@ function formatarDiaSemana(dataString) {
 }
 
 /**
- * Valida se a entrada do usuário é válida
- * 
- * @param {string} cidade - Nome da cidade digitado pelo usuário
- * @returns {boolean} True se válido (não vazio após trim), false caso contrário
- * 
- * @example
- * validarEntrada('São Paulo');  // true
- * validarEntrada('   ');        // false
- * validarEntrada('');           // false
- */
-function validarEntrada(cidade) {
-    return cidade && cidade.trim().length > 0;
-}
-
-/**
  * Realiza requisição HTTP com timeout configurável
  * Utiliza AbortController para cancelar requisições que excedem o tempo limite
  * 
@@ -127,17 +297,6 @@ function validarEntrada(cidade) {
  * @param {number} [timeout=TIMEOUT_MS] - Tempo máximo em milissegundos
  * @returns {Promise<Response>} Promise que resolve com a resposta HTTP
  * @throws {Error} Lança erro 'TIMEOUT' se exceder tempo limite
- * @throws {Error} Propaga outros erros de rede
- * 
- * @example
- * try {
- *   const response = await fetchComTimeout('https://api.example.com', 5000);
- *   const data = await response.json();
- * } catch (erro) {
- *   if (erro.message === 'TIMEOUT') {
- *     console.log('Requisição expirou');
- *   }
- * }
  */
 async function fetchComTimeout(url, timeout = TIMEOUT_MS) {
     const controller = new AbortController();
@@ -156,84 +315,106 @@ async function fetchComTimeout(url, timeout = TIMEOUT_MS) {
     }
 }
 
+/**
+ * Loga erro de forma apropriada baseado no ambiente
+ * 
+ * @param {string} contexto - Contexto do erro
+ * @param {Error} erro - Objeto de erro
+ */
+function logarErro(contexto, erro) {
+    if (!MODO_PRODUCAO) {
+        // Modo desenvolvimento: log detalhado
+        console.error(`[${contexto}] Erro detalhado:`, erro);
+        console.trace();
+    } else {
+        // Modo produção: log simplificado
+        console.error(`[${contexto}] Erro na aplicação`);
+        // Aqui você poderia enviar para serviço de monitoramento
+        // exemplo: Sentry.captureException(erro);
+    }
+}
+
 // ===== FUNÇÕES DE API =====
 
 /**
  * Busca coordenadas geográficas de uma cidade usando API de Geocoding
+ * Implementa validação rigorosa de dados recebidos
  * 
  * @async
  * @param {string} cidade - Nome da cidade a ser pesquisada
  * @returns {Promise<Object|null>} Objeto com coordenadas ou null se não encontrado
- * @returns {number} returns.latitude - Latitude da cidade
- * @returns {number} returns.longitude - Longitude da cidade
- * @returns {string} returns.nome - Nome oficial da cidade
- * @returns {string} returns.pais - País da cidade
- * @throws {Error} Lança erro se falhar na requisição HTTP
- * @throws {Error} Lança erro 'TIMEOUT' se exceder tempo limite
- * 
- * @example
- * const coords = await buscarCoordenadas('São Paulo');
- * // { latitude: -23.5505, longitude: -46.6333, nome: 'São Paulo', pais: 'Brasil' }
- * 
- * const naoEncontrada = await buscarCoordenadas('CidadeInexistente123');
- * // null
+ * @throws {Error} Lança erro se falhar na requisição HTTP ou dados inválidos
  */
 async function buscarCoordenadas(cidade) {
     const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cidade)}&count=1&language=pt&format=json`;
+    
     const resposta = await fetchComTimeout(url);
+    
+    // Validar status HTTP
+    if (!resposta.ok) {
+        throw new Error(`HTTP ${resposta.status}`);
+    }
+    
     const dados = await resposta.json();
 
-    if (!dados.results || dados.results.length === 0) {
+    // Validação de segurança: verificar estrutura da resposta
+    if (!dados || typeof dados !== 'object') {
+        throw new Error('Resposta inválida da API de geocodificação');
+    }
+
+    // Cidade não encontrada
+    if (!Array.isArray(dados.results) || dados.results.length === 0) {
         return null;
     }
 
     const resultado = dados.results[0];
+    
+    // Validar dados recebidos
+    if (!validarDadosGeocodificacao(resultado)) {
+        logarErro('buscarCoordenadas', new Error('Dados de geocodificação corrompidos'));
+        throw new Error(MENSAGENS_ERRO.DADOS_INVALIDOS);
+    }
+
     return {
         latitude: resultado.latitude,
         longitude: resultado.longitude,
-        nome: resultado.name,
-        pais: resultado.country
+        nome: sanitizarTexto(resultado.name),
+        pais: sanitizarTexto(resultado.country || 'Desconhecido')
     };
 }
 
 /**
- * Busca dados meteorológicos atuais e previsão de 5 dias usando coordenadas geográficas
+ * Busca dados meteorológicos atuais e previsão de 5 dias
+ * Implementa validação rigorosa de dados recebidos
  * 
  * @async
  * @param {Object} coordenadas - Objeto contendo latitude e longitude
- * @param {number} coordenadas.latitude - Latitude da localização
- * @param {number} coordenadas.longitude - Longitude da localização
  * @returns {Promise<Object>} Dados climáticos atuais e previsão diária
- * @returns {Object} returns.current - Dados do clima atual
- * @returns {number} returns.current.temperature_2m - Temperatura em graus Celsius
- * @returns {number} returns.current.relative_humidity_2m - Umidade relativa em %
- * @returns {number} returns.current.wind_speed_10m - Velocidade do vento em km/h
- * @returns {number} returns.current.weather_code - Código do clima (0-99)
- * @returns {Object} returns.daily - Dados de previsão diária para 5 dias
- * @returns {Array<string>} returns.daily.time - Array com datas (YYYY-MM-DD)
- * @returns {Array<number>} returns.daily.temperature_2m_max - Temperaturas máximas
- * @returns {Array<number>} returns.daily.temperature_2m_min - Temperaturas mínimas
- * @returns {Array<number>} returns.daily.weather_code - Códigos do clima diários
- * @throws {Error} Lança erro se falhar na requisição HTTP
- * @throws {Error} Lança erro 'TIMEOUT' se exceder tempo limite
- * 
- * @example
- * const coords = { latitude: -23.5505, longitude: -46.6333 };
- * const clima = await buscarDadosClima(coords);
- * // { 
- * //   current: { temperature_2m: 25.5, weather_code: 0, ... },
- * //   daily: { 
- * //     time: ['2025-10-13', '2025-10-14', ...],
- * //     temperature_2m_max: [28, 29, ...],
- * //     temperature_2m_min: [18, 19, ...],
- * //     weather_code: [0, 2, ...]
- * //   }
- * // }
+ * @throws {Error} Lança erro se falhar na requisição HTTP ou dados inválidos
  */
 async function buscarDadosClima(coordenadas) {
+    // Validar coordenadas antes de fazer requisição
+    if (!validarCoordenadas(coordenadas.latitude, coordenadas.longitude)) {
+        throw new Error('Coordenadas inválidas fornecidas');
+    }
+    
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${coordenadas.latitude}&longitude=${coordenadas.longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=5`;
+    
     const resposta = await fetchComTimeout(url);
+    
+    // Validar status HTTP
+    if (!resposta.ok) {
+        throw new Error(`HTTP ${resposta.status}`);
+    }
+    
     const dados = await resposta.json();
+    
+    // Validar estrutura dos dados recebidos
+    if (!validarDadosClima(dados)) {
+        logarErro('buscarDadosClima', new Error('Estrutura de dados climáticos inválida'));
+        throw new Error(MENSAGENS_ERRO.DADOS_INVALIDOS);
+    }
+    
     return {
         current: dados.current,
         daily: dados.daily
@@ -244,32 +425,49 @@ async function buscarDadosClima(coordenadas) {
 
 /**
  * Função principal que orquestra o fluxo de busca de clima
+ * Implementa throttling para prevenir spam de requisições
  * Valida entrada, busca coordenadas, obtém dados climáticos e atualiza interface
  * 
  * @async
  * @returns {Promise<void>}
- * @throws {Error} Erros são tratados internamente e exibidos ao usuário
- * 
- * @fires mostrarErro - Dispara quando há erro de validação ou API
- * @fires mostrarCarregamento - Dispara ao iniciar busca
- * @fires esconderCarregamento - Dispara ao finalizar busca
- * @fires exibirClima - Dispara quando dados são obtidos com sucesso
- * 
- * @example
- * // Chamado automaticamente ao clicar no botão de busca
- * // ou pressionar Enter no campo de input
- * await buscarClima();
  */
 async function buscarClima() {
+    // SEGURANÇA: Prevenir múltiplas requisições simultâneas
+    if (buscaEmAndamento) {
+        logarErro('buscarClima', new Error('Tentativa de busca múltipla bloqueada'));
+        return;
+    }
+    
+    // SEGURANÇA: Throttling - verificar intervalo mínimo entre buscas
+    const agora = Date.now();
+    if (agora - ultimaBusca < INTERVALO_MINIMO_MS) {
+        mostrarErro(MENSAGENS_ERRO.AGUARDAR);
+        return;
+    }
+    
     const cidade = cityInput.value.trim();
 
+    // SEGURANÇA: Validação robusta de entrada
     if (!validarEntrada(cidade)) {
-        mostrarErro(MENSAGENS_ERRO.CIDADE_VAZIA);
+        if (cidade.length > 0) {
+            mostrarErro(MENSAGENS_ERRO.CIDADE_INVALIDA);
+        } else {
+            mostrarErro(MENSAGENS_ERRO.CIDADE_VAZIA);
+        }
         return;
     }
 
+    // Atualizar controles de throttling
+    buscaEmAndamento = true;
+    ultimaBusca = agora;
+    
     esconderMensagens();
     mostrarCarregamento();
+    
+    // Desabilitar botão e input durante busca
+    searchBtn.disabled = true;
+    searchBtn.textContent = 'Buscando...';
+    cityInput.disabled = true;
 
     try {
         const coordenadas = await buscarCoordenadas(cidade);
@@ -286,26 +484,23 @@ async function buscarClima() {
         tratarErro(erro);
     } finally {
         esconderCarregamento();
+        buscaEmAndamento = false;
+        
+        // Reabilitar botão e input
+        searchBtn.disabled = false;
+        searchBtn.textContent = 'Buscar';
+        cityInput.disabled = false;
     }
 }
 
 /**
  * Trata diferentes tipos de erro e exibe mensagem apropriada
- * Identifica erros de timeout, rede e servidor para feedback específico
  * 
  * @param {Error} erro - Objeto de erro capturado
- * @returns {void}
- * 
- * @example
- * try {
- *   await fetch('https://api.example.com');
- * } catch (erro) {
- *   tratarErro(erro);
- *   // Exibe mensagem adequada ao tipo de erro
- * }
  */
 function tratarErro(erro) {
-    console.error('Erro:', erro);
+    logarErro('tratarErro', erro);
+    
     let mensagem = MENSAGENS_ERRO.GENERICO;
 
     if (erro.message === 'TIMEOUT') {
@@ -314,6 +509,8 @@ function tratarErro(erro) {
         mensagem = MENSAGENS_ERRO.REDE;
     } else if (erro.message.includes('500') || erro.message.includes('502') || erro.message.includes('503')) {
         mensagem = MENSAGENS_ERRO.SERVIDOR;
+    } else if (erro.message === MENSAGENS_ERRO.DADOS_INVALIDOS) {
+        mensagem = MENSAGENS_ERRO.DADOS_INVALIDOS;
     }
 
     mostrarErro(mensagem);
@@ -323,28 +520,15 @@ function tratarErro(erro) {
 
 /**
  * Atualiza a interface com os dados meteorológicos obtidos
- * Preenche elementos HTML e alterna da tela de busca para tela de resultado
  * 
  * @param {string} nome - Nome da cidade
  * @param {string} pais - Nome do país
  * @param {Object} dados - Dados climáticos da API
- * @param {Object} dados.current - Dados do clima atual
- * @param {number} dados.current.temperature_2m - Temperatura em Celsius
- * @param {number} dados.current.weather_code - Código do clima
- * @param {Object} dados.daily - Dados de previsão diária
- * @returns {void}
- * 
- * @example
- * const dados = { 
- *   current: { temperature_2m: 25.5, weather_code: 0 },
- *   daily: { time: [...], temperature_2m_max: [...], temperature_2m_min: [...], weather_code: [...] }
- * };
- * exibirClima('São Paulo', 'Brasil', dados);
- * // Atualiza tela com clima atual e previsão de 5 dias
  */
 function exibirClima(nome, pais, dados) {
     esconderMensagens();
     
+    // Usar dados já sanitizados
     cityName.textContent = `${nome}, ${pais}`;
     
     // Exibir temperatura atual (máxima) e mínima do dia
@@ -367,24 +551,8 @@ function exibirClima(nome, pais, dados) {
 
 /**
  * Exibe a previsão dos próximos 4 dias na interface
- * Cria cards com informações diárias de clima
  * 
  * @param {Object} dadosDiarios - Dados de previsão diária da API
- * @param {Array<string>} dadosDiarios.time - Array com datas
- * @param {Array<number>} dadosDiarios.temperature_2m_max - Temperaturas máximas
- * @param {Array<number>} dadosDiarios.temperature_2m_min - Temperaturas mínimas
- * @param {Array<number>} dadosDiarios.weather_code - Códigos do clima
- * @returns {void}
- * 
- * @example
- * const daily = {
- *   time: ['2025-10-13', '2025-10-14', '2025-10-15', '2025-10-16', '2025-10-17'],
- *   temperature_2m_max: [28, 29, 27, 26, 28],
- *   temperature_2m_min: [18, 19, 17, 16, 18],
- *   weather_code: [0, 2, 3, 61, 0]
- * };
- * exibirPrevisao5Dias(daily);
- * // Cria 4 cards com previsão (ignora índice 0 que é hoje)
  */
 function exibirPrevisao5Dias(dadosDiarios) {
     forecastGrid.innerHTML = '';
@@ -428,24 +596,9 @@ function exibirPrevisao5Dias(dadosDiarios) {
 
 /**
  * Converte código numérico do clima em descrição e ícone visual
- * Mapeia códigos WMO (World Meteorological Organization) para interface
  * 
  * @param {number} codigo - Código do clima (0-99)
  * @returns {Object} Objeto com descrição e classe do ícone
- * @returns {string} returns.descricao - Descrição em português do clima
- * @returns {string} returns.icone - Classe CSS do Weather Icons
- * 
- * @see {@link https://open-meteo.com/en/docs|Open-Meteo Weather Codes}
- * 
- * @example
- * obterDescricaoClima(0);
- * // { descricao: 'Céu limpo', icone: 'wi-day-sunny' }
- * 
- * obterDescricaoClima(61);
- * // { descricao: 'Chuva leve', icone: 'wi-rain' }
- * 
- * obterDescricaoClima(999);
- * // { descricao: 'Clima desconhecido', icone: 'wi-na' }
  */
 function obterDescricaoClima(codigo) {
     const codigos = {
@@ -477,29 +630,21 @@ function obterDescricaoClima(codigo) {
 
 /**
  * Retorna para a tela de busca e limpa o estado da aplicação
- * Reseta campo de input, mensagens e alterna visualização de telas
- * 
- * @returns {void}
- * 
- * @example
- * voltarParaBusca();
- * // Limpa input, esconde mensagens, volta para tela de busca
  */
 function voltarParaBusca() {
     cityInput.value = '';
     esconderMensagens();
     resultScreen.style.display = 'none';
     searchScreen.style.display = 'flex';
+    
+    // Resetar controles de throttling ao voltar
+    buscaEmAndamento = false;
 }
 
 /**
  * Exibe mensagem de erro na interface
  * 
  * @param {string} mensagem - Texto da mensagem a ser exibida
- * @returns {void}
- * 
- * @example
- * mostrarErro('Cidade não encontrada');
  */
 function mostrarErro(mensagem) {
     esconderMensagens();
@@ -509,8 +654,6 @@ function mostrarErro(mensagem) {
 
 /**
  * Exibe indicador de carregamento
- * 
- * @returns {void}
  */
 function mostrarCarregamento() {
     loading.style.display = 'block';
@@ -518,8 +661,6 @@ function mostrarCarregamento() {
 
 /**
  * Oculta indicador de carregamento
- * 
- * @returns {void}
  */
 function esconderCarregamento() {
     loading.style.display = 'none';
@@ -527,8 +668,6 @@ function esconderCarregamento() {
 
 /**
  * Oculta todas as mensagens (erro e carregamento)
- * 
- * @returns {void}
  */
 function esconderMensagens() {
     loading.style.display = 'none';
@@ -540,13 +679,6 @@ function esconderMensagens() {
 /**
  * Aplica tema visual baseado no horário local
  * Modo noturno: 18h-6h | Modo diurno: 6h-18h
- * 
- * @returns {void}
- * 
- * @example
- * aplicarTemaHorario();
- * // Se for 20h: adiciona classe 'night-mode' ao body
- * // Se for 14h: remove classe 'night-mode' do body
  */
 function aplicarTemaHorario() {
     const horaAtual = new Date().getHours();
@@ -566,13 +698,11 @@ aplicarTemaHorario();
 
 /**
  * Event Listener: Busca clima ao clicar no botão
- * @event click
  */
 searchBtn.addEventListener('click', buscarClima);
 
 /**
  * Event Listener: Busca clima ao pressionar Enter no input
- * @event keypress
  */
 cityInput.addEventListener('keypress', (evento) => {
     if (evento.key === 'Enter') {
@@ -581,7 +711,30 @@ cityInput.addEventListener('keypress', (evento) => {
 });
 
 /**
+ * Event Listener: Validação em tempo real durante digitação (debouncing)
+ * Fornece feedback imediato sobre entrada inválida
+ */
+cityInput.addEventListener('input', () => {
+    clearTimeout(timeoutInput);
+    
+    timeoutInput = setTimeout(() => {
+        const cidade = cityInput.value.trim();
+        
+        // Validar apenas se houver conteúdo suficiente
+        if (cidade.length > 2) {
+            if (!validarEntrada(cidade)) {
+                error.textContent = MENSAGENS_ERRO.CIDADE_INVALIDA;
+                error.style.display = 'block';
+            } else {
+                error.style.display = 'none';
+            }
+        } else {
+            error.style.display = 'none';
+        }
+    }, 500); // Aguarda 500ms após parar de digitar
+});
+
+/**
  * Event Listener: Retorna à tela de busca ao clicar no botão voltar
- * @event click
  */
 backBtn.addEventListener('click', voltarParaBusca);
